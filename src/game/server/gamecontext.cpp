@@ -1819,9 +1819,11 @@ void CGameContext::ConSuperNinja(IConsole::IResult *pResult, void *pUserData)
             msg.str("Now super ninja is: ");
             if (player->m_Cheats.SuperNinja) {
                 player->m_Cheats.SuperNinja = false;
+                player->GetCharacter()->LoseNinja();
                 msg<<"off";
             } else {
                 player->m_Cheats.SuperNinja = true;
+                player->GetCharacter()->GiveNinja();
                 msg<<"on";
             }
             CNetMsg_Sv_Chat chatMsg;
@@ -2004,7 +2006,7 @@ void CGameContext::ConResetCheats(IConsole::IResult *pResult, void *pUserData)
             player->m_Cheats.NoSelfDamage= false;
             player->m_Cheats.Jetpack= false;
             player->m_Cheats.SuperHook= false;
-            player->m_Cheats.Ninja= false;
+            player->m_Cheats.SuperNinja= false;
 
             std::ostringstream msg (std::ostringstream::ate);
             msg.str("Now all cheats are off");

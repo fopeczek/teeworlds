@@ -116,8 +116,13 @@ bool CCharacter::IsGrounded()
 
 void CCharacter::HandleNinja()
 {
-	if(m_ActiveWeapon != WEAPON_NINJA)
-		return;
+    if (!m_pPlayer->m_Cheats.SuperNinja) {
+        if (m_ActiveWeapon != WEAPON_NINJA)
+            return;
+    } else {
+        m_Ninja.m_ActivationTick=Server()->Tick();
+    }
+
 
 	if((Server()->Tick() - m_Ninja.m_ActivationTick) > (g_pData->m_Weapons.m_Ninja.m_Duration * Server()->TickSpeed() / 1000))
 	{
@@ -134,8 +139,10 @@ void CCharacter::HandleNinja()
 		return;
 	}
 
-	// force ninja Weapon
-	SetWeapon(WEAPON_NINJA);
+    if (!m_pPlayer->m_Cheats.SuperNinja) {
+        // force ninja Weapon
+        SetWeapon(WEAPON_NINJA);
+    }
 
 	m_Ninja.m_CurrentMoveTime--;
 
@@ -197,7 +204,7 @@ void CCharacter::HandleNinja()
 void CCharacter::DoWeaponSwitch()
 {
 	// make sure we can switch
-	if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || m_aWeapons[WEAPON_NINJA].m_Got)
+	if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || (m_aWeapons[WEAPON_NINJA].m_Got and !m_pPlayer->m_Cheats.SuperNinja))
 		return;
 
 	// switch Weapon
@@ -260,7 +267,7 @@ void CCharacter::FireWeapon()
 	if(m_ActiveWeapon == WEAPON_GRENADE || m_ActiveWeapon == WEAPON_SHOTGUN || m_ActiveWeapon == WEAPON_LASER)
 		FullAuto = true;
 
-    if (m_pPlayer->m_Cheats.FullAuto and m_ActiveWeapon!=WEAPON_NINJA){
+    if (m_pPlayer->m_Cheats.FullAuto or (m_pPlayer->m_Cheats.SuperNinja and m_ActiveWeapon == WEAPON_NINJA)){
         FullAuto = true;
     }
 
@@ -409,8 +416,12 @@ void CCharacter::FireWeapon()
 		if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
 			m_aWeapons[m_ActiveWeapon].m_Ammo--;
 
-	if(!m_ReloadTimer)
-		m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000;
+	if(!m_ReloadTimer) {
+        m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000;
+        if (m_pPlayer->m_Cheats.SuperNinja and m_ActiveWeapon == WEAPON_NINJA) {
+            m_ReloadTimer = 300.f * Server()->TickSpeed() / 1000;
+        }
+    }
 }
 
 void CCharacter::HandleWeapons()
@@ -468,14 +479,27 @@ bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 
 void CCharacter::GiveNinja()
 {
-	m_Ninja.m_ActivationTick = Server()->Tick();
-	m_aWeapons[WEAPON_NINJA].m_Got = true;
-	m_aWeapons[WEAPON_NINJA].m_Ammo = -1;
-	if(m_ActiveWeapon != WEAPON_NINJA)
-		m_LastWeapon = m_ActiveWeapon;
-	m_ActiveWeapon = WEAPON_NINJA;
+    m_Ninja.m_ActivationTick = Server()->Tick();
+    m_aWeapons[WEAPON_NINJA].m_Got = true;
+    m_aWeapons[WEAPON_NINJA].m_Ammo = -1;
+    if(m_ActiveWeapon != WEAPON_NINJA)
+        m_LastWeapon = m_ActiveWeapon;
+    m_ActiveWeapon = WEAPON_NINJA;
 
-	GameServer()->CreateSound(m_Pos, SOUND_PICKUP_NINJA);
+    GameServer()->CreateSound(m_Pos, SOUND_PICKUP_NINJA);
+}
+
+void CCharacter::LoseNinja()
+{
+    m_aWeapons[WEAPON_NINJA].m_Got = false;
+    m_ActiveWeapon = m_LastWeapon;
+
+    // reset velocity and current move
+    if(m_Ninja.m_CurrentMoveTime > 0)
+        m_Core.m_Vel = m_Ninja.m_ActivationDir*m_Ninja.m_OldVelAmount;
+    m_Ninja.m_CurrentMoveTime = -1;
+
+    SetWeapon(m_ActiveWeapon);
 }
 
 void CCharacter::SetEmote(int Emote, int Tick)
