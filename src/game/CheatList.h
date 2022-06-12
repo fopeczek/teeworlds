@@ -12,6 +12,7 @@ struct AvailableCheats{
     bool NoSelfDamage= false;
     bool NoEnemyDamage= false;
     bool LockMovement = false;
+    bool LockHook = false;
     bool LockPosition = false;
     vec2 LockPos;
     bool LockWeapons = false;

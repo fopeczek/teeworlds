@@ -75,7 +75,12 @@ class CGameContext : public IGameServer
     static void ConNoEnemyDamage(IConsole::IResult *pResult, void *pUserData);
     static void ConJetpack(IConsole::IResult *pResult, void *pUserData);
     static void ConSuperHook(IConsole::IResult *pResult, void *pUserData);
+    static void ConLockMovement(IConsole::IResult *pResult, void *pUserData);
+    static void ConLockHook(IConsole::IResult *pResult, void *pUserData);
+    static void ConLockWeapons(IConsole::IResult *pResult, void *pUserData);
+    static void ConLockPosition(IConsole::IResult *pResult, void *pUserData);
     static void ConResetCheats(IConsole::IResult *pResult, void *pUserData);
+    static void ConResetLocks(IConsole::IResult *pResult, void *pUserData);
 
 	static void NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 	static void RemoveCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);

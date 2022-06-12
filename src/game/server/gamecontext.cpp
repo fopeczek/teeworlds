@@ -1799,6 +1799,152 @@ void CGameContext::ConSuperHook(IConsole::IResult *pResult, void *pUserData)
     }
 }
 
+void CGameContext::ConLockMovement(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now movement is: ");
+            if (player->m_Cheats.LockMovement) {
+                player->m_Cheats.LockMovement = false;
+                msg<<"unlocked";
+            } else {
+                player->m_Cheats.LockMovement = true;
+                msg<<"locked";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+void CGameContext::ConLockHook(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now hook is: ");
+            if (player->m_Cheats.LockHook) {
+                player->m_Cheats.LockHook = false;
+                msg<<"unlocked";
+            } else {
+                player->m_Cheats.LockHook = true;
+                msg<<"locked";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+void CGameContext::ConLockWeapons(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now weapons are is: ");
+            if (player->m_Cheats.LockWeapons) {
+                player->m_Cheats.LockWeapons = false;
+                msg<<"unlocked";
+            } else {
+                player->m_Cheats.LockWeapons = true;
+                msg<<"locked";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+void CGameContext::ConLockPosition(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now your position is: ");
+            if (player->m_Cheats.LockPosition) {
+                player->m_Cheats.LockPosition = false;
+                player->m_Cheats.LockPos=vec2(0,0);
+                msg<<"unlocked";
+            } else {
+                player->m_Cheats.LockPosition = true;
+                player->m_Cheats.LockPos=player->GetCharacter()->GetPos();
+                msg<<"locked";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
 void CGameContext::ConResetCheats(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1823,10 +1969,6 @@ void CGameContext::ConResetCheats(IConsole::IResult *pResult, void *pUserData)
             player->m_Cheats.Jetpack= false;
             player->m_Cheats.SuperHook= false;
             player->m_Cheats.Ninja= false;
-            player->m_Cheats.LockMovement= false;
-            player->m_Cheats.LockPosition= false;
-            player->m_Cheats.LockPos= vec2(0,0);
-            player->m_Cheats.LockWeapons= false;
 
             std::ostringstream msg (std::ostringstream::ate);
             msg.str("Now all cheats are off");
@@ -1841,6 +1983,40 @@ void CGameContext::ConResetCheats(IConsole::IResult *pResult, void *pUserData)
     }
 }
 
+void CGameContext::ConResetLocks(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            player->m_Cheats.LockMovement= false;
+            player->m_Cheats.LockPosition= false;
+            player->m_Cheats.LockHook= false;
+            player->m_Cheats.LockPos= vec2(0,0);
+            player->m_Cheats.LockWeapons= false;
+
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now all locks are off");
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -1870,7 +2046,12 @@ void CGameContext::OnConsoleInit()
     Console()->Register("NoEnemyDamage", "?i[playerID]", CFGFLAG_SERVER, ConNoEnemyDamage, this, "Toggle no enemy damage mode for certain player");
     Console()->Register("Jetpack", "?i[playerID]", CFGFLAG_SERVER, ConJetpack, this, "Toggle jetpack mode for certain player");
     Console()->Register("SuperHook", "?i[playerID]", CFGFLAG_SERVER, ConSuperHook, this, "Toggle jetpack mode for certain player");
+    Console()->Register("LockMovement", "?i[playerID]", CFGFLAG_SERVER, ConLockMovement, this, "Toggle lock for movement of certain player");
+    Console()->Register("LockHook", "?i[playerID]", CFGFLAG_SERVER, ConLockHook, this, "Toggle lock for hook of certain player");
+    Console()->Register("LockWeapons", "?i[playerID]", CFGFLAG_SERVER, ConLockWeapons, this, "Toggle lock for weapons of certain player");
+    Console()->Register("LockPosition", "?i[playerID]", CFGFLAG_SERVER, ConLockPosition, this, "Toggle lock of position for certain player");
     Console()->Register("ResetCheats", "?i[playerID]", CFGFLAG_SERVER, ConResetCheats, this, "Reset all cheats for certain player");
+    Console()->Register("ResetLocks", "?i[playerID]", CFGFLAG_SERVER, ConResetLocks, this, "Reset all cheats for certain player");
 
 	Console()->Register("add_vote", "s[option] r[command]", CFGFLAG_SERVER, ConAddVote, this, "Add a voting option");
 	Console()->Register("remove_vote", "s[option]", CFGFLAG_SERVER, ConRemoveVote, this, "remove a voting option");

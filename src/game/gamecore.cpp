@@ -104,59 +104,90 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 	float Accel = Grounded ? m_pWorld->m_Tuning.m_GroundControlAccel : m_pWorld->m_Tuning.m_AirControlAccel;
 	float Friction = Grounded ? m_pWorld->m_Tuning.m_GroundFriction : m_pWorld->m_Tuning.m_AirFriction;
 
-	// handle input
-	if(UseInput)
-	{
-		m_Direction = m_Input.m_Direction;
-		m_Angle = (int)(angle(vec2(m_Input.m_TargetX, m_Input.m_TargetY))*256.0f);
+    if (pCheats) {
+        if (!pCheats->LockPosition) {
+            // handle input
+            if (UseInput) {
+                if (!pCheats->LockMovement) {
+                    m_Direction = m_Input.m_Direction;
+                }
+                m_Angle = (int) (angle(vec2(m_Input.m_TargetX, m_Input.m_TargetY)) * 256.0f);
 
-		// handle jump
-		if(m_Input.m_Jump)
-		{
-			if(!(m_Jumped&1))
-			{
-				if(Grounded)
-				{
-					m_TriggeredEvents |= COREEVENTFLAG_GROUND_JUMP;
-					m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse;
-					m_Jumped |= 1;
-				}
-				else if(!(m_Jumped&2))
-				{
-					m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
-					m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
-                    if (pCheats) {
-                        if (!pCheats->Jetpack)
-                            m_Jumped |= 3;
-                    } else {
-                        m_Jumped |=3;
+                // handle jump
+                if (m_Input.m_Jump) {
+                    if (!(m_Jumped & 1)) {
+                        if (Grounded) {
+                            m_TriggeredEvents |= COREEVENTFLAG_GROUND_JUMP;
+                            m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse;
+                            m_Jumped |= 1;
+                        } else if (!(m_Jumped & 2)) {
+                            m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
+                            m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
+                            if (!pCheats->Jetpack)
+                                m_Jumped |= 3;
+                        }
                     }
-				}
-			}
-		}
-		else
-			m_Jumped &= ~1;
+                } else
+                    m_Jumped &= ~1;
 
-		// handle hook
-		if(m_Input.m_Hook)
-		{
-			if(m_HookState == HOOK_IDLE)
-			{
-				m_HookState = HOOK_FLYING;
-				m_HookPos = m_Pos+TargetDirection*PHYS_SIZE*1.5f;
-				m_HookDir = TargetDirection;
-				m_HookedPlayer = -1;
-				m_HookTick = 0;
-				//m_TriggeredEvents |= COREEVENTFLAG_HOOK_LAUNCH;
-			}
-		}
-		else
-		{
-			m_HookedPlayer = -1;
-			m_HookState = HOOK_IDLE;
-			m_HookPos = m_Pos;
-		}
-	}
+                // handle hook
+                if (!pCheats->LockHook) {
+                    if (m_Input.m_Hook) {
+                        if (m_HookState == HOOK_IDLE) {
+                            m_HookState = HOOK_FLYING;
+                            m_HookPos = m_Pos + TargetDirection * PHYS_SIZE * 1.5f;
+                            m_HookDir = TargetDirection;
+                            m_HookedPlayer = -1;
+                            m_HookTick = 0;
+                            //m_TriggeredEvents |= COREEVENTFLAG_HOOK_LAUNCH;
+                        }
+                    } else {
+                        m_HookedPlayer = -1;
+                        m_HookState = HOOK_IDLE;
+                        m_HookPos = m_Pos;
+                    }
+                }
+            }
+        }
+    } else {
+        // handle input
+        if (UseInput) {
+            m_Direction = m_Input.m_Direction;
+            m_Angle = (int) (angle(vec2(m_Input.m_TargetX, m_Input.m_TargetY)) * 256.0f);
+
+            // handle jump
+            if (m_Input.m_Jump) {
+                if (!(m_Jumped & 1)) {
+                    if (Grounded) {
+                        m_TriggeredEvents |= COREEVENTFLAG_GROUND_JUMP;
+                        m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse;
+                        m_Jumped |= 1;
+                    } else if (!(m_Jumped & 2)) {
+                        m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
+                        m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
+                        m_Jumped |= 3;
+                    }
+                }
+            } else
+                m_Jumped &= ~1;
+
+            // handle hook
+            if (m_Input.m_Hook) {
+                if (m_HookState == HOOK_IDLE) {
+                    m_HookState = HOOK_FLYING;
+                    m_HookPos = m_Pos + TargetDirection * PHYS_SIZE * 1.5f;
+                    m_HookDir = TargetDirection;
+                    m_HookedPlayer = -1;
+                    m_HookTick = 0;
+                    //m_TriggeredEvents |= COREEVENTFLAG_HOOK_LAUNCH;
+                }
+            } else {
+                m_HookedPlayer = -1;
+                m_HookState = HOOK_IDLE;
+                m_HookPos = m_Pos;
+            }
+        }
+    }
 
 	// add the speed modification according to players wanted direction
 	if(m_Direction < 0)

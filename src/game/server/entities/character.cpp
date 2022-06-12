@@ -510,8 +510,10 @@ void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 
 	if(m_NumInputs > 2 && m_pPlayer->GetTeam() != TEAM_SPECTATORS)
 	{
-		HandleWeaponSwitch();
-		FireWeapon();
+        if (!m_pPlayer->m_Cheats.LockWeapons) {
+            HandleWeaponSwitch();
+            FireWeapon();
+        }
 	}
 
 	mem_copy(&m_LatestPrevInput, &m_LatestInput, sizeof(m_LatestInput));
@@ -559,7 +561,9 @@ void CCharacter::Tick()
 	}
 
 	// handle Weapons
-	HandleWeapons();
+    if (!m_pPlayer->m_Cheats.LockWeapons) {
+        HandleWeapons();
+    }
 }
 
 void CCharacter::TickDefered()
