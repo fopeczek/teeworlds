@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include "collision.h"
+#include "CheatList.h"
 #include <engine/console.h>
 #include <engine/shared/protocol.h>
 #include <generated/protocol.h>
@@ -173,7 +174,7 @@ public:
 
 	void Init(CWorldCore *pWorld, CCollision *pCollision);
 	void Reset();
-	void Tick(bool UseInput);
+	void Tick(bool UseInput, AvailableCheats *pCheats=nullptr);
 	void Move();
 
 	void AddDragVelocity();

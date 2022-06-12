@@ -1380,7 +1380,7 @@ set(GAME_GENERATED_SHARED
   src/generated/git_revision.cpp
   src/generated/nethash.cpp
   src/generated/protocol.h
-)
+        src/game/CheatList.h)
 
 set(DEPS ${DEP_JSON} ${DEP_MD5} ${ZLIB_DEP})
 
@@ -1642,7 +1642,7 @@ set(GAME_GENERATED_SERVER
   src/generated/server_data.cpp
   src/generated/server_data.h
 )
-set(SERVER_SRC ${ENGINE_SERVER} ${GAME_SERVER} ${GAME_GENERATED_SERVER})
+set(SERVER_SRC ${ENGINE_SERVER} ${GAME_SERVER} ${GAME_GENERATED_SERVER} src/game/CheatList.h)
 if(TARGET_OS STREQUAL "windows")
   set(SERVER_ICON "other/icons/${SERVER_EXECUTABLE}.rc")
 else()

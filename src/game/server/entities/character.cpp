@@ -550,7 +550,7 @@ void CCharacter::Tick()
         }
     }
 	m_Core.m_Input = m_Input;
-	m_Core.Tick(true);
+	m_Core.Tick(true, &m_pPlayer->m_Cheats);
 
 	// handle leaving gamelayer
 	if(GameLayerClipped(m_Pos))
@@ -681,7 +681,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-	if (!m_pPlayer->m_Cheats.Godmode) {
+	if (!m_pPlayer->m_Cheats.Godmode) { //you can respawn without ing losing flag and score
 		// we got to wait 0.5 secs before respawning
 		m_Alive = false;
 		m_pPlayer->m_RespawnTick = Server()->Tick() + Server()->TickSpeed() / 2;
@@ -752,8 +752,16 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 		}
 
 		// m_pPlayer only inflicts half damage on self
-		if (From == m_pPlayer->GetCID())
-			Dmg = maximum(1, Dmg / 2);
+		if (From == m_pPlayer->GetCID()) {
+            Dmg = maximum(1, Dmg / 2);
+            if (m_pPlayer->m_Cheats.NoSelfDamage){
+                Dmg=0;
+            }
+        } else {
+            if (m_pPlayer->m_Cheats.NoEnemyDamage){
+                Dmg=0;
+            }
+        }
 
 		int OldHealth = m_Health, OldArmor = m_Armor;
 		if (Dmg) {

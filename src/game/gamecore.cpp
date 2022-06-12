@@ -87,7 +87,7 @@ void CCharacterCore::Reset()
 	m_Death = false;
 }
 
-void CCharacterCore::Tick(bool UseInput)
+void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 {
 	m_TriggeredEvents = 0;
 
@@ -125,7 +125,12 @@ void CCharacterCore::Tick(bool UseInput)
 				{
 					m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
 					m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
-					m_Jumped |= 3;
+                    if (pCheats) {
+                        if (!pCheats->Jetpack)
+                            m_Jumped |= 3;
+                    } else {
+                        m_Jumped |=3;
+                    }
 				}
 			}
 		}
@@ -199,7 +204,15 @@ void CCharacterCore::Tick(bool UseInput)
 		if(Hit)
 		{
 			if(Hit&CCollision::COLFLAG_NOHOOK)
-				GoingToRetract = true;
+                if (pCheats) {
+                    if (pCheats->SuperHook) {
+                        GoingToHitGround = true;
+                    } else {
+                        GoingToRetract = true;
+                    }
+                } else{
+                    GoingToRetract= true;
+                }
 			else
 				GoingToHitGround = true;
 		}
@@ -291,7 +304,13 @@ void CCharacterCore::Tick(bool UseInput)
 		}
 
 		// release hook (max hook time is 1.25
-		m_HookTick++;
+        if (pCheats){
+            if (!pCheats->SuperHook){
+                m_HookTick++;
+            }
+        } else {
+            m_HookTick++;
+        }
 		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED+SERVER_TICK_SPEED/5 || !m_pWorld->m_apCharacters[m_HookedPlayer]))
 		{
 			m_HookedPlayer = -1;
