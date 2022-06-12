@@ -247,6 +247,9 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::FireWeapon()
 {
+	if (m_pPlayer->m_Cheats.FullAuto and m_ActiveWeapon!=WEAPON_NINJA)
+		m_ReloadTimer=0;
+
 	if(m_ReloadTimer != 0)
 		return;
 
@@ -257,6 +260,9 @@ void CCharacter::FireWeapon()
 	if(m_ActiveWeapon == WEAPON_GRENADE || m_ActiveWeapon == WEAPON_SHOTGUN || m_ActiveWeapon == WEAPON_LASER)
 		FullAuto = true;
 
+    if (m_pPlayer->m_Cheats.FullAuto and m_ActiveWeapon!=WEAPON_NINJA){
+        FullAuto = true;
+    }
 
 	// check if we gonna fire
 	bool WillFire = false;
@@ -399,8 +405,9 @@ void CCharacter::FireWeapon()
 
 	m_AttackTick = Server()->Tick();
 
-	if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
-		m_aWeapons[m_ActiveWeapon].m_Ammo--;
+	if (!m_pPlayer->m_Cheats.AllWeapons)
+		if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
+			m_aWeapons[m_ActiveWeapon].m_Ammo--;
 
 	if(!m_ReloadTimer)
 		m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000;
@@ -524,6 +531,24 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
+	if(m_Health<10 and m_pPlayer->m_Cheats.Godmode){
+		m_Health=10;
+	}
+	if(m_Armor<10 and m_pPlayer->m_Cheats.Godmode){
+		m_Armor=10;
+	}
+    if (m_pPlayer->m_Cheats.AllWeapons) {
+        for (int i = 0; i < NUM_WEAPONS; i++) {
+            if (i!=WEAPON_NINJA) {
+                if (!m_aWeapons[i].m_Got) {
+                    m_aWeapons[i].m_Got = true;
+                    m_aWeapons[i].m_Ammo = g_pData->m_Weapons.m_aId[i].m_Maxammo;
+                } else if (m_aWeapons[i].m_Ammo < g_pData->m_Weapons.m_aId[i].m_Maxammo) {
+                    m_aWeapons[i].m_Ammo = g_pData->m_Weapons.m_aId[i].m_Maxammo;
+                }
+            }
+        }
+    }
 	m_Core.m_Input = m_Input;
 	m_Core.Tick(true);
 
@@ -656,151 +681,141 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-	// we got to wait 0.5 secs before respawning
-	m_Alive = false;
-	m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
-	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, (Killer < 0) ? 0 : GameServer()->m_apPlayers[Killer], Weapon);
+	if (!m_pPlayer->m_Cheats.Godmode) {
+		// we got to wait 0.5 secs before respawning
+		m_Alive = false;
+		m_pPlayer->m_RespawnTick = Server()->Tick() + Server()->TickSpeed() / 2;
+		int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, (Killer < 0) ? 0
+																						   : GameServer()->m_apPlayers[Killer],
+																		Weapon);
 
-	char aBuf[256];
-	if(Killer < 0)
-	{
-		str_format(aBuf, sizeof(aBuf), "kill killer='%d:%d:' victim='%d:%d:%s' weapon=%d special=%d",
-			Killer, - 1 - Killer,
-			m_pPlayer->GetCID(), m_pPlayer->GetTeam(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial
-		);
-	}
-	else
-	{
-		str_format(aBuf, sizeof(aBuf), "kill killer='%d:%d:%s' victim='%d:%d:%s' weapon=%d special=%d",
-			Killer, GameServer()->m_apPlayers[Killer]->GetTeam(), Server()->ClientName(Killer),
-			m_pPlayer->GetCID(), m_pPlayer->GetTeam(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial
-		);
-	}
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-
-	// send the kill message
-	CNetMsg_Sv_KillMsg Msg;
-	Msg.m_Victim = m_pPlayer->GetCID();
-	Msg.m_ModeSpecial = ModeSpecial;
-	for(int i = 0 ; i < MAX_CLIENTS; i++)
-	{
-		if(!Server()->ClientIngame(i))
-			continue;
-
-		if(Killer < 0 && Server()->GetClientVersion(i) < MIN_KILLMESSAGE_CLIENTVERSION)
-		{
-			Msg.m_Killer = 0;
-			Msg.m_Weapon = WEAPON_WORLD;
+		char aBuf[256];
+		if (Killer < 0) {
+			str_format(aBuf, sizeof(aBuf), "kill killer='%d:%d:' victim='%d:%d:%s' weapon=%d special=%d",
+					   Killer, -1 - Killer,
+					   m_pPlayer->GetCID(), m_pPlayer->GetTeam(), Server()->ClientName(m_pPlayer->GetCID()), Weapon,
+					   ModeSpecial
+			);
+		} else {
+			str_format(aBuf, sizeof(aBuf), "kill killer='%d:%d:%s' victim='%d:%d:%s' weapon=%d special=%d",
+					   Killer, GameServer()->m_apPlayers[Killer]->GetTeam(), Server()->ClientName(Killer),
+					   m_pPlayer->GetCID(), m_pPlayer->GetTeam(), Server()->ClientName(m_pPlayer->GetCID()), Weapon,
+					   ModeSpecial
+			);
 		}
-		else
-		{
-			Msg.m_Killer = Killer;
-			Msg.m_Weapon = Weapon;
+		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+
+		// send the kill message
+		CNetMsg_Sv_KillMsg Msg;
+		Msg.m_Victim = m_pPlayer->GetCID();
+		Msg.m_ModeSpecial = ModeSpecial;
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			if (!Server()->ClientIngame(i))
+				continue;
+
+			if (Killer < 0 && Server()->GetClientVersion(i) < MIN_KILLMESSAGE_CLIENTVERSION) {
+				Msg.m_Killer = 0;
+				Msg.m_Weapon = WEAPON_WORLD;
+			} else {
+				Msg.m_Killer = Killer;
+				Msg.m_Weapon = Weapon;
+			}
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
 		}
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+
+		// a nice sound
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_DIE);
+
+		// this is for auto respawn after 3 secs
+		m_pPlayer->m_DieTick = Server()->Tick();
+
+		GameWorld()->RemoveEntity(this);
+		GameWorld()->m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
+		GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
 	}
-
-	// a nice sound
-	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_DIE);
-
-	// this is for auto respawn after 3 secs
-	m_pPlayer->m_DieTick = Server()->Tick();
-
-	GameWorld()->RemoveEntity(this);
-	GameWorld()->m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
-	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
 }
 
 bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon)
 {
-	m_Core.m_Vel += Force;
+	if (!m_pPlayer->m_Cheats.Godmode) {
+		m_Core.m_Vel += Force;
 
-	if(From >= 0)
-	{
-		if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
+		if (From >= 0) {
+			if (GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
+				return false;
+		} else {
+			int Team = TEAM_RED;
+			if (From == PLAYER_TEAM_BLUE)
+				Team = TEAM_BLUE;
+			if (GameServer()->m_pController->IsFriendlyTeamFire(m_pPlayer->GetTeam(), Team))
+				return false;
+		}
+
+		// m_pPlayer only inflicts half damage on self
+		if (From == m_pPlayer->GetCID())
+			Dmg = maximum(1, Dmg / 2);
+
+		int OldHealth = m_Health, OldArmor = m_Armor;
+		if (Dmg) {
+			if (m_Armor) {
+				if (Dmg > 1) {
+					m_Health--;
+					Dmg--;
+				}
+
+				if (Dmg > m_Armor) {
+					Dmg -= m_Armor;
+					m_Armor = 0;
+				} else {
+					m_Armor -= Dmg;
+					Dmg = 0;
+				}
+			}
+
+			m_Health -= Dmg;
+		}
+
+		// create healthmod indicator
+		GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), Source, OldHealth - m_Health, OldArmor - m_Armor,
+								   From == m_pPlayer->GetCID());
+
+		// do damage Hit sound
+		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
+			int64 Mask = CmaskOne(From);
+			for (int i = 0; i < MAX_CLIENTS; i++) {
+				if (GameServer()->m_apPlayers[i] && (GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS ||
+													 GameServer()->m_apPlayers[i]->m_DeadSpecMode) &&
+					GameServer()->m_apPlayers[i]->GetSpectatorID() == From)
+					Mask |= CmaskOne(i);
+			}
+			GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+		}
+
+		// check for death
+		if (m_Health <= 0) {
+			Die(From, Weapon);
+
+			// set attacker's face to happy (taunt!)
+			if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
+				CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
+				if (pChr) {
+					pChr->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+				}
+			}
+
 			return false;
-	}
-	else
-	{
-		int Team = TEAM_RED;
-		if(From == PLAYER_TEAM_BLUE)
-			Team = TEAM_BLUE;
-		if(GameServer()->m_pController->IsFriendlyTeamFire(m_pPlayer->GetTeam(), Team))
-			return false;
-	}
-
-	// m_pPlayer only inflicts half damage on self
-	if(From == m_pPlayer->GetCID())
-		Dmg = maximum(1, Dmg/2);
-
-	int OldHealth = m_Health, OldArmor = m_Armor;
-	if(Dmg)
-	{
-		if(m_Armor)
-		{
-			if(Dmg > 1)
-			{
-				m_Health--;
-				Dmg--;
-			}
-
-			if(Dmg > m_Armor)
-			{
-				Dmg -= m_Armor;
-				m_Armor = 0;
-			}
-			else
-			{
-				m_Armor -= Dmg;
-				Dmg = 0;
-			}
 		}
 
-		m_Health -= Dmg;
+		if (Dmg > 2)
+			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
+		else
+			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
+
+		SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
+
+		return true;
 	}
-
-	// create healthmod indicator
-	GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), Source, OldHealth-m_Health, OldArmor-m_Armor, From == m_pPlayer->GetCID());
-
-	// do damage Hit sound
-	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-	{
-		int64 Mask = CmaskOne(From);
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(GameServer()->m_apPlayers[i] && (GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS ||  GameServer()->m_apPlayers[i]->m_DeadSpecMode) &&
-				GameServer()->m_apPlayers[i]->GetSpectatorID() == From)
-				Mask |= CmaskOne(i);
-		}
-		GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
-	}
-
-	// check for death
-	if(m_Health <= 0)
-	{
-		Die(From, Weapon);
-
-		// set attacker's face to happy (taunt!)
-		if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-		{
-			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
-			if(pChr)
-			{
-				pChr->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
-			}
-		}
-
-		return false;
-	}
-
-	if(Dmg > 2)
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
-	else
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
-
-	SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
-
-	return true;
+	return false;
 }
 
 void CCharacter::Snap(int SnappingClient)

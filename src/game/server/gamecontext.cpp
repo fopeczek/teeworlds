@@ -11,6 +11,7 @@
 #include <game/collision.h>
 #include <game/gamecore.h>
 #include <game/version.h>
+#include <sstream>
 
 #include "entities/character.h"
 #include "entities/projectile.h"
@@ -1546,6 +1547,114 @@ void CGameContext::ConchainGameinfoUpdate(IConsole::IResult *pResult, void *pUse
 	}
 }
 
+void CGameContext::ConGodmode(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now god mode is: ");
+            if (player->m_Cheats.Godmode) {
+                player->m_Cheats.Godmode = false;
+                msg<<"off";
+            } else {
+                player->m_Cheats.Godmode = true;
+                msg<<"on";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+void CGameContext::ConAllWeapons(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now all weapon mode is: ");
+            if (player->m_Cheats.AllWeapons) {
+                player->m_Cheats.AllWeapons = false;
+                msg<<"off";
+            } else {
+                player->m_Cheats.AllWeapons = true;
+                msg<<"on";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+void CGameContext::ConFullAuto(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now full auto is: ");
+            if (player->m_Cheats.FullAuto) {
+                player->m_Cheats.FullAuto = false;
+                msg<<"off";
+            } else {
+                player->m_Cheats.FullAuto = true;
+                msg<<"on";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -1566,7 +1675,11 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");
 	Console()->Register("shuffle_teams", "", CFGFLAG_SERVER, ConShuffleTeams, this, "Shuffle the current teams");
 	Console()->Register("lock_teams", "", CFGFLAG_SERVER, ConLockTeams, this, "Lock/unlock teams");
-	Console()->Register("force_teambalance", "", CFGFLAG_SERVER, ConForceTeamBalance, this, "Force team balance");
+    Console()->Register("force_teambalance", "", CFGFLAG_SERVER, ConForceTeamBalance, this, "Force team balance");
+
+    Console()->Register("Godmode", "?i[playerID]", CFGFLAG_SERVER, ConGodmode, this, "Toggle godmode for certain player");
+    Console()->Register("AllWeapons", "?i[playerID]", CFGFLAG_SERVER, ConAllWeapons, this, "Toggle all weapon availability for certain player");
+    Console()->Register("FullAuto", "?i[playerID]", CFGFLAG_SERVER, ConFullAuto, this, "Toggle full auto fire mode for certain player");
 
 	Console()->Register("add_vote", "s[option] r[command]", CFGFLAG_SERVER, ConAddVote, this, "Add a voting option");
 	Console()->Register("remove_vote", "s[option]", CFGFLAG_SERVER, ConRemoveVote, this, "remove a voting option");

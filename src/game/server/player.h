@@ -42,6 +42,25 @@ public:
 	void KillCharacter(int Weapon = WEAPON_GAME);
 	CCharacter *GetCharacter();
 
+
+    struct AvailableCheats{
+        bool Godmode= false;
+        bool AllWeapons= false;
+        bool FullAuto= false;
+        bool NoSelfDamage= false;
+        bool NoEnemyDamage= false;
+        bool LockMovement = false;
+        bool LockPosition = false;
+        vec2 LockPos;
+        bool LockWeapons = false;
+        bool Jetpack = false;
+        bool Hookmode = false;
+        bool Ninja= false;
+        bool KeepCheat = false;
+    };
+
+    AvailableCheats m_Cheats;
+
 	//---------------------------------------------------------
 	// this is used for snapping so we know how we can clip the view for the player
 	vec2 m_ViewPos;

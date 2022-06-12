@@ -67,6 +67,11 @@ class CGameContext : public IGameServer
 	static void ConchainSettingUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainGameinfoUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
+
+    static void ConGodmode(IConsole::IResult *pResult, void *pUserData);
+    static void ConAllWeapons(IConsole::IResult *pResult, void *pUserData);
+    static void ConFullAuto(IConsole::IResult *pResult, void *pUserData);
+
 	static void NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 	static void RemoveCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 
