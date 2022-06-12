@@ -1,0 +1,232 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-a5eec0dc7d09fb21b366.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "teeworlds",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "crapnet::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-crapnet-Debug-dbce5e37da759420408b.json",
+					"name" : "crapnet",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "engine-shared::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-engine-shared-Debug-f29e2bd31c0209ca8603.json",
+					"name" : "engine-shared",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "everything::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-everything-Debug-13502a0ebdcf9c9a5ba6.json",
+					"name" : "everything",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fake_server::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fake_server-Debug-e7ceaa2c9349eabc1902.json",
+					"name" : "fake_server",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "game-shared::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-game-shared-Debug-903bcb9b9eeeba2bac2e.json",
+					"name" : "game-shared",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "json::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-json-Debug-285ee8114e4946ba8a85.json",
+					"name" : "json",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "map_resave::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-map_resave-Debug-574baa73ae2ecee063bf.json",
+					"name" : "map_resave",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "map_version::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-map_version-Debug-1f2bc913b4c66aefbc67.json",
+					"name" : "map_version",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "mastersrv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-mastersrv-Debug-e615547a204fd7983fb6.json",
+					"name" : "mastersrv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "md5::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-md5-Debug-baf332b3fe0435063c07.json",
+					"name" : "md5",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "package_all::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-package_all-Debug-81c5d6bf3f0f97ece2ca.json",
+					"name" : "package_all",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "package_default::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-package_default-Debug-b0e017fb5f4249bf7376.json",
+					"name" : "package_default",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "package_tar_gz::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-package_tar_gz-Debug-c3a3e2d61a3729338f55.json",
+					"name" : "package_tar_gz",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "package_tar_xz::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-package_tar_xz-Debug-4695f97ac94e4c3e9af0.json",
+					"name" : "package_tar_xz",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "package_zip::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-package_zip-Debug-ced0e4315331b9a2d169.json",
+					"name" : "package_zip",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "packetgen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-packetgen-Debug-27b207b7df8b139170e3.json",
+					"name" : "packetgen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "teeworlds::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-teeworlds-Debug-f8cbc81ec853ce47276c.json",
+					"name" : "teeworlds",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "teeworlds_srv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-teeworlds_srv-Debug-b0ce3c649b7d5d9e2c5f.json",
+					"name" : "teeworlds_srv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tools::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tools-Debug-079bca0bdfbe4c4fd06a.json",
+					"name" : "tools",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "versionsrv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-versionsrv-Debug-526cc2c58d1b3b18d4fb.json",
+					"name" : "versionsrv",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/opt/games/teeworlds/cmake-build-debug",
+		"source" : "/opt/games/teeworlds"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
