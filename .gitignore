@@ -75,3 +75,13 @@ googletest-src
 install_manifest.txt
 pack_*/
 rules.ninja
+/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-bd2e3259864c762e2871.json
+/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-9c5ef85b2ad84f76d7ec.json
+/cmake-build-debug/.cmake/api/v1/reply/index-2022-06-12T12-41-05-0581.json
+/cmake-build-debug/.cmake/api/v1/reply/target-everything-Debug-3dda249d5a7e34a463c3.json
+/cmake-build-debug/.cmake/api/v1/reply/target-game-shared-Debug-251aa5ba829ff3d6484d.json
+/cmake-build-debug/.cmake/api/v1/reply/target-package_tar_gz-Debug-a2725ebe8ce0af517bcd.json
+/cmake-build-debug/.cmake/api/v1/reply/target-package_tar_xz-Debug-c232efc4995b4498fa1d.json
+/cmake-build-debug/.cmake/api/v1/reply/target-package_zip-Debug-f8e72dd7483290dc0cd7.json
+/cmake-build-debug/.cmake/api/v1/reply/target-teeworlds-Debug-c0a9a94ba3ade58160a2.json
+/cmake-build-debug/.cmake/api/v1/reply/target-teeworlds_srv-Debug-f86ee508aa31664be2b5.json
