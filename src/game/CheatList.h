@@ -18,5 +18,5 @@ struct AvailableCheats{
     bool LockWeapons = false;
     bool Jetpack = false;
     bool SuperHook = false;
-    bool Ninja= false;
+    bool SuperNinja= false;
 };

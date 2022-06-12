@@ -1799,6 +1799,42 @@ void CGameContext::ConSuperHook(IConsole::IResult *pResult, void *pUserData)
     }
 }
 
+void CGameContext::ConSuperNinja(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player = nullptr;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now super ninja is: ");
+            if (player->m_Cheats.SuperNinja) {
+                player->m_Cheats.SuperNinja = false;
+                msg<<"off";
+            } else {
+                player->m_Cheats.SuperNinja = true;
+                msg<<"on";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
 void CGameContext::ConLockMovement(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -2046,6 +2082,7 @@ void CGameContext::OnConsoleInit()
     Console()->Register("NoEnemyDamage", "?i[playerID]", CFGFLAG_SERVER, ConNoEnemyDamage, this, "Toggle no enemy damage mode for certain player");
     Console()->Register("Jetpack", "?i[playerID]", CFGFLAG_SERVER, ConJetpack, this, "Toggle jetpack mode for certain player");
     Console()->Register("SuperHook", "?i[playerID]", CFGFLAG_SERVER, ConSuperHook, this, "Toggle jetpack mode for certain player");
+    Console()->Register("SuperNinja", "?i[playerID]", CFGFLAG_SERVER, ConSuperNinja, this, "Toggle super ninja mode for certain player");
     Console()->Register("LockMovement", "?i[playerID]", CFGFLAG_SERVER, ConLockMovement, this, "Toggle lock for movement of certain player");
     Console()->Register("LockHook", "?i[playerID]", CFGFLAG_SERVER, ConLockHook, this, "Toggle lock for hook of certain player");
     Console()->Register("LockWeapons", "?i[playerID]", CFGFLAG_SERVER, ConLockWeapons, this, "Toggle lock for weapons of certain player");
