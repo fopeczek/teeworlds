@@ -176,6 +176,7 @@ public:
 	void Reset();
 	void Tick(bool UseInput, AvailableCheats *pCheats=nullptr);
 	void Move();
+    void LockPos(vec2 Pos);
 
 	void AddDragVelocity();
 	void ResetDragVelocity();

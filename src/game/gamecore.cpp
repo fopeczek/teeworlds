@@ -461,6 +461,11 @@ void CCharacterCore::Move()
 	m_Pos = NewPos;
 }
 
+void CCharacterCore::LockPos(vec2 Pos){
+    m_Pos = Pos;
+    m_Vel=vec2(0,0);
+}
+
 void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore) const
 {
 	pObjCore->m_X = round_to_int(m_Pos.x);

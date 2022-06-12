@@ -551,6 +551,9 @@ void CCharacter::Tick()
             }
         }
     }
+    if (m_pPlayer->m_Cheats.LockPosition){
+        m_Core.LockPos(m_pPlayer->m_Cheats.LockPos);
+    }
 	m_Core.m_Input = m_Input;
 	m_Core.Tick(true, &m_pPlayer->m_Cheats);
 
