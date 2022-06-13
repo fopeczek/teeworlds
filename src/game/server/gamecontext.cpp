@@ -96,10 +96,10 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	return m_apPlayers[ClientID]->GetCharacter();
 }
 
-void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self)
+void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self, int MapID)
 {
 	float f = angle(Source);
-	CNetEvent_Damage *pEvent = (CNetEvent_Damage *)m_Events.Create(NETEVENTTYPE_DAMAGE, sizeof(CNetEvent_Damage));
+	CNetEvent_Damage *pEvent = (CNetEvent_Damage *)m_Events.Create(NETEVENTTYPE_DAMAGE, sizeof(CNetEvent_Damage), -1, MapID);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -112,10 +112,10 @@ void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount,
 	}
 }
 
-void CGameContext::CreateHammerHit(vec2 Pos)
+void CGameContext::CreateHammerHit(vec2 Pos, int MapID)
 {
 	// create the event
-	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit));
+	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit), -1, MapID);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -124,10 +124,10 @@ void CGameContext::CreateHammerHit(vec2 Pos)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage)
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage, int MapID)
 {
 	// create the event
-	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion));
+	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), -1, MapID);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -153,10 +153,10 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	}
 }
 
-void CGameContext::CreatePlayerSpawn(vec2 Pos)
+void CGameContext::CreatePlayerSpawn(vec2 Pos, int MapID)
 {
 	// create the event
-	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn));
+	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), -1, MapID);
 	if(ev)
 	{
 		ev->m_X = (int)Pos.x;
@@ -164,10 +164,10 @@ void CGameContext::CreatePlayerSpawn(vec2 Pos)
 	}
 }
 
-void CGameContext::CreateDeath(vec2 Pos, int ClientID)
+void CGameContext::CreateDeath(vec2 Pos, int ClientID, int MapID)
 {
 	// create the event
-	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death));
+	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), -1, MapID);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -176,13 +176,13 @@ void CGameContext::CreateDeath(vec2 Pos, int ClientID)
 	}
 }
 
-void CGameContext::CreateSound(vec2 Pos, int Sound, int64 Mask)
+void CGameContext::CreateSound(vec2 Pos, int Sound, int64 Mask, int MapID)
 {
 	if (Sound < 0)
 		return;
 
 	// create a sound
-	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), Mask);
+	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), Mask, MapID);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -709,6 +709,16 @@ void CGameContext::OnClientEnter(int ClientID)
 		Msg.m_Team = NewClientInfoMsg.m_Team;
 		Server()->SendPackMsg(&Msg, MSGFLAG_NOSEND, -1);
 	}
+}
+
+void CGameContext::KillCharacter(int ClientID)
+{
+    if(m_apPlayers[ClientID])
+    {
+        if(m_apPlayers[ClientID]->GetCharacter())
+            m_apPlayers[ClientID]->KillCharacter(-1);
+        //m_apPlayers->SetSpawning(false);
+    }
 }
 
 void CGameContext::OnClientConnected(int ClientID, bool Dummy, bool AsSpec)
@@ -2127,9 +2137,6 @@ void CGameContext::OnInit()
 	for(int i = 0; i < OLD_NUM_NETOBJTYPES; i++)
 		Server()->SnapSetStaticsize(i, m_NetObjHandler.GetObjSize(i));
 
-	m_Layers.Init(Kernel());
-	m_Collision.Init(&m_Layers);
-
 	// select gametype
 	if(str_comp_nocase(Config()->m_SvGametype, "mod") == 0)
 		m_pController = new CGameControllerMOD(this);
@@ -2146,22 +2153,7 @@ void CGameContext::OnInit()
 
 	m_pController->RegisterChatCommands(CommandManager());
 
-	// create all entities from the game layer
-	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
-	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
-	for(int y = 0; y < pTileMap->m_Height; y++)
-	{
-		for(int x = 0; x < pTileMap->m_Width; x++)
-		{
-			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
-
-			if(Index >= ENTITY_OFFSET)
-			{
-				vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);
-				m_pController->OnEntity(Index-ENTITY_OFFSET, Pos);
-			}
-		}
-	}
+    OnInitMap(0);//default map is 0
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
@@ -2190,6 +2182,43 @@ void CGameContext::OnInit()
 			OnClientConnected(MAX_CLIENTS -i-1, true, false);
 	}
 #endif
+}
+
+void CGameContext::OnInitMap(int MapID)
+{
+    if(MapID < (int)m_vLayers.size())//Map exists already, huray
+        return;
+
+    IEngineMap* pMap = Server()->GetMap(MapID);
+
+    m_vLayers.push_back(CLayers());
+    m_vCollision.push_back(CCollision());
+
+    m_vLayers[MapID].Init(Kernel(), pMap);//Default map id
+    m_vCollision[MapID].Init(&(m_vLayers[MapID]));
+
+    m_pController->SetSpawnNum((MapID+1));
+
+    // create all entities from the game layer
+    CMapItemLayerTilemap *pTileMap = m_vLayers[MapID].GameLayer();
+    CTile *pTiles = (CTile *)pMap->GetData(pTileMap->m_Data);
+    for(int y = 0; y < pTileMap->m_Height; y++)
+    {
+        for(int x = 0; x < pTileMap->m_Width; x++)
+        {
+            int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+
+            if(Index >= ENTITY_OFFSET)
+            {
+                vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);
+                m_pController->OnEntity(Index-ENTITY_OFFSET, Pos, MapID);
+            }
+        }
+    }
+
+    char aBuf[128];
+    str_format(aBuf, sizeof(aBuf), "Initalized new Map with ID '%d'", MapID);
+    Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "multimap", aBuf);
 }
 
 void CGameContext::OnShutdown()

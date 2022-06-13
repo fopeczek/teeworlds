@@ -46,7 +46,7 @@ void CLaser::DoBounce()
 
 	vec2 To = m_Pos + m_Dir * m_Energy;
 
-	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
+	if(GameServer()->Collision(GetMapID())->IntersectLine(m_Pos, To, 0x0, &To))
 	{
 		if(!HitCharacter(m_Pos, To))
 		{
@@ -57,7 +57,7 @@ void CLaser::DoBounce()
 			vec2 TempPos = m_Pos;
 			vec2 TempDir = m_Dir * 4.0f;
 
-			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
+			GameServer()->Collision(GetMapID())->MovePoint(&TempPos, &TempDir, 1.0f, 0);
 			m_Pos = TempPos;
 			m_Dir = normalize(TempDir);
 
@@ -67,7 +67,7 @@ void CLaser::DoBounce()
 			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
 				m_Energy = -1;
 
-			GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE);
+            GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE, -1, GetMapID());
 		}
 	}
 	else
@@ -99,7 +99,10 @@ void CLaser::TickPaused()
 
 void CLaser::Snap(int SnappingClient)
 {
-	if(NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From))
+    if(GameServer()->Server()->ClientMapID(SnappingClient) != GetMapID())
+        return;
+
+    if(NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From))
 		return;
 
 	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));

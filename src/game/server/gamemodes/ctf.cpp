@@ -69,20 +69,20 @@ void CGameControllerCTF::OnFlagReturn(CFlag *pFlag)
 	GameServer()->SendGameMsg(GAMEMSG_CTF_RETURN, -1);
 }
 
-bool CGameControllerCTF::OnEntity(int Index, vec2 Pos)
+bool CGameControllerCTF::OnEntity(int Index, vec2 Pos, int MapID)
 {
-	if(IGameController::OnEntity(Index, Pos))
-		return true;
+    if(IGameController::OnEntity(Index, Pos, MapID))
+        return true;
 
-	int Team = -1;
-	if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
-	if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
-	if(Team == -1 || m_apFlags[Team])
-		return false;
+    int Team = -1;
+    if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
+    if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
+    if(Team == -1 || m_apFlags[Team])
+        return false;
 
-	CFlag *F = new CFlag(&GameServer()->m_World, Team, Pos);
-	m_apFlags[Team] = F;
-	return true;
+    CFlag *F = new CFlag(&GameServer()->m_World, Team, Pos, MapID);
+    m_apFlags[Team] = F;
+    return true;
 }
 
 // game
@@ -205,7 +205,7 @@ void CGameControllerCTF::Tick()
 			int Num = GameServer()->m_World.FindEntities(F->GetPos(), CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 			for(int i = 0; i < Num; i++)
 			{
-				if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->GetPos(), apCloseCCharacters[i]->GetPos(), NULL, NULL))
+				if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision(F->GetMapID())->IntersectLine(F->GetPos(), apCloseCCharacters[i]->GetPos(), NULL, NULL))
 					continue;
 
 				if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->GetTeam())

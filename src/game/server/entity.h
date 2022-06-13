@@ -29,6 +29,8 @@ private:
 	int m_ID;
 	int m_ObjType;
 
+    int m_MapID;
+
 	/*
 		Variable: m_ProximityRadius
 			Contains the physical size of the entity.
@@ -69,6 +71,8 @@ public:
 	const vec2 &GetPos() const			{ return m_Pos; }
 	float GetProximityRadius() const	{ return m_ProximityRadius; }
 	bool IsMarkedForDestroy() const		{ return m_MarkedForDestroy; }
+
+    int GetMapID() const				{ return m_MapID; }
 
 	/* Setters */
 	void MarkForDestroy()				{ m_MarkedForDestroy = true; }

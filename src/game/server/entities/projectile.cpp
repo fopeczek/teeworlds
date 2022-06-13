@@ -72,7 +72,7 @@ void CProjectile::Tick()
 	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &CurPos, 0);
+	int Collide = GameServer()->Collision(GetMapID())->IntersectLine(PrevPos, CurPos, &CurPos, 0);
 	CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *TargetChr = GameWorld()->IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 
@@ -81,10 +81,10 @@ void CProjectile::Tick()
 	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
-			GameServer()->CreateSound(CurPos, m_SoundImpact);
+			GameServer()->CreateSound(CurPos, m_SoundImpact, -1, GetMapID());
 
 		if(m_Explosive)
-			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, m_Damage);
+			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, m_Damage, GetMapID());
 
 		else if(TargetChr)
 			TargetChr->TakeDamage(m_Direction * maximum(0.001f, m_Force), m_Direction*-1, m_Damage, m_Owner, m_Weapon);
@@ -110,7 +110,10 @@ void CProjectile::FillInfo(CNetObj_Projectile *pProj)
 
 void CProjectile::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+    if(GameServer()->Server()->ClientMapID(SnappingClient) != GetMapID())
+        return;
+
+    float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
 
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;

@@ -52,6 +52,6 @@ bool CEntity::GameLayerClipped(vec2 CheckPos)
 {
 	int rx = round_to_int(CheckPos.x) / 32;
 	int ry = round_to_int(CheckPos.y) / 32;
-	return (rx < -200 || rx >= GameServer()->Collision()->GetWidth()+200)
-			|| (ry < -200 || ry >= GameServer()->Collision()->GetHeight()+200);
+	return (rx < -200 || rx >= GameServer()->Collision(GetMapID())->GetWidth()+200)
+			|| (ry < -200 || ry >= GameServer()->Collision(GetMapID())->GetHeight()+200);
 }

@@ -19,7 +19,7 @@ void CEventHandler::SetGameServer(CGameContext *pGameServer)
 	m_pGameServer = pGameServer;
 }
 
-void *CEventHandler::Create(int Type, int Size, int64 Mask)
+void *CEventHandler::Create(int Type, int Size, int64 Mask, int MapID)
 {
 	if(m_NumEvents == MAX_EVENTS)
 		return 0;
@@ -31,6 +31,7 @@ void *CEventHandler::Create(int Type, int Size, int64 Mask)
 	m_aTypes[m_NumEvents] = Type;
 	m_aSizes[m_NumEvents] = Size;
 	m_aClientMasks[m_NumEvents] = Mask;
+	m_aMapID[m_NumEvents] = MapID;
 	m_CurrentOffset += Size;
 	m_NumEvents++;
 	return p;
