@@ -62,46 +62,44 @@ bool CMapChecker::IsMapValid(const char *pMapName, const SHA256_DIGEST *pMapSha2
 	return !StandardMap;
 }
 
-bool CMapChecker::ReadAndValidateMap(const char *pFilename, int StorageType)
+bool CMapChecker::ReadAndValidateMap(IStorage *pStorage, const char *pFilename, int StorageType)
 {
-	IStorage *pStorage = Kernel()->RequestInterface<IStorage>();
+    // extract map name
+    char aMapName[MAX_MAP_LENGTH];
+    char aMapNameExt[MAX_MAP_LENGTH+4];
+    bool StandardMap = false;
+    const char *pExtractedName = pFilename;
+    const char *pEnd = 0;
 
-	// extract map name
-	char aMapName[MAX_MAP_LENGTH];
-	char aMapNameExt[MAX_MAP_LENGTH+4];
-	bool StandardMap = false;
-	const char *pExtractedName = pFilename;
-	const char *pEnd = 0;
+    for(const char *pSrc = pFilename; *pSrc; ++pSrc)
+    {
+        if(*pSrc == '/' || *pSrc == '\\')
+            pExtractedName = pSrc+1;
+        else if(*pSrc == '.')
+            pEnd = pSrc;
+    }
 
-	for(const char *pSrc = pFilename; *pSrc; ++pSrc)
-	{
-		if(*pSrc == '/' || *pSrc == '\\')
-			pExtractedName = pSrc+1;
-		else if(*pSrc == '.')
-			pEnd = pSrc;
-	}
+    int Length = (int)(pEnd - pExtractedName);
+    if(Length <= 0 || Length >= MAX_MAP_LENGTH)
+        return true;
+    str_truncate(aMapName, MAX_MAP_LENGTH, pExtractedName, pEnd - pExtractedName);
+    str_format(aMapNameExt, sizeof(aMapNameExt), "%s.map", aMapName);
 
-	int Length = (int)(pEnd - pExtractedName);
-	if(Length <= 0 || Length >= MAX_MAP_LENGTH)
-		return true;
-	str_truncate(aMapName, MAX_MAP_LENGTH, pExtractedName, pEnd - pExtractedName);
-	str_format(aMapNameExt, sizeof(aMapNameExt), "%s.map", aMapName);
+    // check for valid map
+    for(CWhitelistEntry *pCurrent = m_pFirst; pCurrent; pCurrent = pCurrent->m_pNext)
+    {
+        if(str_comp(pCurrent->m_aMapName, aMapName) == 0)
+        {
+            StandardMap = true;
+            char aBuffer[512]; // TODO: MAX_PATH_LENGTH (512) should be defined in a more central header and not in storage.cpp and editor.h
+            if(pStorage->FindFile(aMapNameExt, "maps", StorageType, aBuffer, sizeof(aBuffer), &pCurrent->m_MapSha256, pCurrent->m_MapCrc, pCurrent->m_MapSize))
+                return true;
+        }
+        else if(StandardMap)
+            break;
+    }
 
-	// check for valid map
-	for(CWhitelistEntry *pCurrent = m_pFirst; pCurrent; pCurrent = pCurrent->m_pNext)
-	{
-		if(str_comp(pCurrent->m_aMapName, aMapName) == 0)
-		{
-			StandardMap = true;
-			char aBuffer[IO_MAX_PATH_LENGTH];
-			if(pStorage->FindFile(aMapNameExt, "maps", StorageType, aBuffer, sizeof(aBuffer), &pCurrent->m_MapSha256, pCurrent->m_MapCrc, pCurrent->m_MapSize))
-				return true;
-		}
-		else if(StandardMap)
-			break;
-	}
-
-	return !StandardMap;
+    return !StandardMap;
 }
 
 int CMapChecker::NumStandardMaps()

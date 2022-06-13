@@ -54,7 +54,7 @@ protected:
 
 public:
 	/* Constructor */
-	CEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int ProximityRadius=0);
+    CEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int MapID, int ProximityRadius=0);
 
 	/* Destructor */
 	virtual ~CEntity();

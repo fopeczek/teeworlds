@@ -41,8 +41,8 @@ CInputCount CountInput(int Prev, int Cur)
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 // Character, "physical" player's part
-CCharacter::CCharacter(CGameWorld *pWorld)
-: CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER, vec2(0, 0), ms_PhysSize)
+CCharacter::CCharacter(CGameWorld *pWorld, int MapID)
+        : CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER, vec2(0, 0), MapID, ms_PhysSize)
 {
 	m_Health = 0;
 	m_Armor = 0;
@@ -352,7 +352,7 @@ void CCharacter::FireWeapon()
 				ProjStartPos,
 				Direction,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
-				g_pData->m_Weapons.m_Gun.m_pBase->m_Damage, false, 0, -1, WEAPON_GUN);
+				g_pData->m_Weapons.m_Gun.m_pBase->m_Damage, false, 0, -1, WEAPON_GUN, GetMapID());
 
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, -1, GetMapID());
 		} break;
@@ -373,7 +373,7 @@ void CCharacter::FireWeapon()
 					ProjStartPos,
 					vec2(cosf(a), sinf(a))*Speed,
 					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage, false, 0, -1, WEAPON_SHOTGUN);
+					g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage, false, 0, -1, WEAPON_SHOTGUN, GetMapID());
 			}
 
 			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, -1, GetMapID());
@@ -386,14 +386,14 @@ void CCharacter::FireWeapon()
 				ProjStartPos,
 				Direction,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime),
-				g_pData->m_Weapons.m_Grenade.m_pBase->m_Damage, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE);
+				g_pData->m_Weapons.m_Grenade.m_pBase->m_Damage, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE, GetMapID());
 
 			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, -1, GetMapID());
 		} break;
 
 		case WEAPON_LASER:
 		{
-			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID());
+            new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), GetMapID());
 			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, -1, GetMapID());
 		} break;
 

@@ -96,6 +96,16 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	return m_apPlayers[ClientID]->GetCharacter();
 }
 
+int CGameContext::GetClientTeam(int ClientID)
+{
+    return m_apPlayers[ClientID]->GetTeam();
+}
+
+void CGameContext::SetClientMapChange(int ClientID, bool team)
+{
+    m_apPlayers[ClientID]->m_MapChange = team;
+}
+
 void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self, int MapID)
 {
 	float f = angle(Source);
@@ -723,22 +733,27 @@ void CGameContext::KillCharacter(int ClientID)
 
 void CGameContext::OnClientConnected(int ClientID, bool Dummy, bool AsSpec)
 {
-	dbg_assert(!m_apPlayers[ClientID], "non-free player slot");
+    if(m_apPlayers[ClientID])
+    {
+        //dbg_assert(m_apPlayers[ClientID]->IsDummy(), "invalid clientID");
+        OnClientDrop(ClientID, "removing dummy");
+    }
 
-	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, Dummy, AsSpec);
+    //if(!m_apPlayers[ClientID])
+    m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, Dummy, AsSpec);
 
-	if(Dummy)
-		return;
+    if(Dummy)
+        return;
 
-	// send active vote
-	if(m_VoteCloseTime)
-		SendVoteSet(m_VoteType, ClientID);
+    // send active vote
+    if(m_VoteCloseTime)
+        SendVoteSet(m_VoteType, ClientID);
 
-	// send motd
-	SendMotd(ClientID);
+    // send motd
+    SendMotd(ClientID);
 
-	// send settings
-	SendSettings(ClientID);
+    // send settings
+    SendSettings(ClientID);
 }
 
 void CGameContext::OnClientTeamChange(int ClientID)
@@ -2122,38 +2137,35 @@ void CGameContext::RemoveCommandHook(const CCommandManager::CCommand *pCommand, 
 
 void CGameContext::OnInit()
 {
-	// init everything
-	m_pServer = Kernel()->RequestInterface<IServer>();
-	m_pConfig = Kernel()->RequestInterface<IConfigManager>()->Values();
-	m_pConsole = Kernel()->RequestInterface<IConsole>();
-	m_pStorage = Kernel()->RequestInterface<IStorage>();
-	m_World.SetGameServer(this);
-	m_Events.SetGameServer(this);
-	m_CommandManager.Init(m_pConsole, this, NewCommandHook, RemoveCommandHook);
+    // init everything
+    m_pServer = Kernel()->RequestInterface<IServer>();
+    m_pConfig = Kernel()->RequestInterface<IConfigManager>()->Values();
+    m_pConsole = Kernel()->RequestInterface<IConsole>();
+    m_pStorage = Kernel()->RequestInterface<IStorage>();
+    m_World.SetGameServer(this);
+    m_Events.SetGameServer(this);
+    m_CommandManager.Init(m_pConsole, this, NewCommandHook, RemoveCommandHook);
 
-	// HACK: only set static size for items, which were available in the first 0.7 release
-	// so new items don't break the snapshot delta
-	static const int OLD_NUM_NETOBJTYPES = 23;
-	for(int i = 0; i < OLD_NUM_NETOBJTYPES; i++)
-		Server()->SnapSetStaticsize(i, m_NetObjHandler.GetObjSize(i));
+    for(int i = 0; i < NUM_NETOBJTYPES; i++)
+        Server()->SnapSetStaticsize(i, m_NetObjHandler.GetObjSize(i));
 
-	// select gametype
-	if(str_comp_nocase(Config()->m_SvGametype, "mod") == 0)
-		m_pController = new CGameControllerMOD(this);
-	else if(str_comp_nocase(Config()->m_SvGametype, "ctf") == 0)
-		m_pController = new CGameControllerCTF(this);
-	else if(str_comp_nocase(Config()->m_SvGametype, "lms") == 0)
-		m_pController = new CGameControllerLMS(this);
-	else if(str_comp_nocase(Config()->m_SvGametype, "lts") == 0)
-		m_pController = new CGameControllerLTS(this);
-	else if(str_comp_nocase(Config()->m_SvGametype, "tdm") == 0)
-		m_pController = new CGameControllerTDM(this);
-	else
-		m_pController = new CGameControllerDM(this);
+    // select gametype
+    if(str_comp_nocase(Config()->m_SvGametype, "mod") == 0)
+        m_pController = new CGameControllerMOD(this);
+//    else if(str_comp_nocase(Config()->m_SvGametype, "ctf-class") == 0)
+//        m_pController = new CGameControllerCTFC(this);
+    else if(str_comp_nocase(Config()->m_SvGametype, "ctf") == 0)
+        m_pController = new CGameControllerCTF(this);
+    else if(str_comp_nocase(Config()->m_SvGametype, "lms") == 0)
+        m_pController = new CGameControllerLMS(this);
+    else if(str_comp_nocase(Config()->m_SvGametype, "lts") == 0)
+        m_pController = new CGameControllerLTS(this);
+    else if(str_comp_nocase(Config()->m_SvGametype, "tdm") == 0)
+        m_pController = new CGameControllerTDM(this);
+    else
+        m_pController = new CGameControllerDM(this);
 
-	m_pController->RegisterChatCommands(CommandManager());
-
-    OnInitMap(0);//default map is 0
+    OnInitMap(Server()->MainMapID);//default map is 0
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 

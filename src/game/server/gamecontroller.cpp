@@ -302,7 +302,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int MapID)
 
 	if(Type != -1)
 	{
-		new CPickup(&GameServer()->m_World, Type, Pos);
+        new CPickup(&GameServer()->m_World, Type, Pos, MapID);
 		return true;
 	}
 
@@ -935,6 +935,12 @@ void IGameController::ChangeMap(const char *pToMap)
 	m_MatchCount = m_GameInfo.m_MatchNum-1;
 	SetGameState(IGS_GAME_RUNNING);
 	EndMatch();
+
+    if(m_GameState != IGS_END_MATCH)
+    {
+        // game could not been ended, force cycle
+        CycleMap();
+    }
 }
 
 void IGameController::CycleMap()

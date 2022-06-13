@@ -34,8 +34,7 @@ class IGameController
 		TBALANCE_CHECK=-2,
 		TBALANCE_OK,
 	};
-	int m_aTeamSize[NUM_TEAMS];
-	int m_UnbalancedTick;
+    int m_UnbalancedTick;
 
 	virtual bool CanBeMovedOnBalance(int ClientID) const;
 	void CheckTeamBalance();
@@ -250,6 +249,8 @@ public:
 
 	//static void Com_Example(IConsole::IResult *pResult, void *pContext);
 	virtual void RegisterChatCommands(CCommandManager *pManager);
+
+    int m_aTeamSize[NUM_TEAMS];
 };
 
 #endif

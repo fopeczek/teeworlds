@@ -1295,7 +1295,7 @@ int CServer::LoadMap(const char *pMapName)
     str_format(aBuf, sizeof(aBuf), "maps/%s.map", pMapName);
 
     // check for valid standard map
-    if(!m_MapChecker.ReadAndValidateMap(aBuf, IStorage::TYPE_ALL))
+    if(!m_MapChecker.ReadAndValidateMap(Storage(), aBuf, IStorage::TYPE_ALL))
     {
         Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "mapchecker", "invalid standard map");
         return 0;
@@ -1519,10 +1519,16 @@ void CServer::ChangeClientMap(int ClientID)
     if(m_aClients[ClientID].m_State <= CClient::STATE_AUTH)
         return;
 
+    int Score = m_aClients[ClientID].m_Score;
+
     GameServer()->KillCharacter(ClientID);
     SendMap(ClientID, m_aClients[ClientID].m_NextMapID);
     m_aClients[ClientID].Reset();
     m_aClients[ClientID].m_State = aSpecs[ClientID] ? CClient::STATE_CONNECTING_AS_SPEC : CClient::STATE_CONNECTING;
+
+    m_aClients[ClientID].m_Score = Score;
+
+    GameServer()->SetClientMapChange(ClientID, true);
 
     GameServer()->OnInitMap(m_aClients[ClientID].m_NextMapID);
 }
@@ -1862,16 +1868,6 @@ void CServer::ConchainRconPasswordSet(IConsole::IResult *pResult, void *pUserDat
 	}
 }
 
-void CServer::ConchainMapUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
-{
-	pfnCallback(pResult, pCallbackUserData);
-	if(pResult->NumArguments() >= 1)
-	{
-		CServer *pThis = static_cast<CServer *>(pUserData);
-		pThis->m_MapReload = str_comp(pThis->Config()->m_SvMap, pThis->m_vMapData[MAP_DEFAULT_ID].m_aCurrentMap) != 0;
-	}
-}
-
 void CServer::RegisterCommands()
 {
 	// register console commands
@@ -1896,7 +1892,6 @@ void CServer::RegisterCommands()
 	Console()->Chain("mod_command", ConchainModCommandUpdate, this);
 	Console()->Chain("console_output_level", ConchainConsoleOutputLevelUpdate, this);
 	Console()->Chain("sv_rcon_password", ConchainRconPasswordSet, this);
-	Console()->Chain("sv_map", ConchainMapUpdate, this);
 
 	// register console commands in sub parts
 	m_ServerBan.InitServerBan(Console(), Storage(), this);

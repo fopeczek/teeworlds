@@ -5,14 +5,16 @@
 #include "gamecontext.h"
 #include "player.h"
 
-CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, vec2 Pos, int ProximityRadius)
+CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, vec2 Pos, int MapID, int ProximityRadius)
 {
 	m_pGameWorld = pGameWorld;
 
 	m_pPrevTypeEntity = 0;
 	m_pNextTypeEntity = 0;
 
-	m_ID = Server()->SnapNewID();
+    m_ID = Server()->SnapNewID();
+    m_MapID = MapID;
+
 	m_ObjType = ObjType;
 
 	m_ProximityRadius = ProximityRadius;

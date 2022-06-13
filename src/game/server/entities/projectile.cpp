@@ -7,8 +7,8 @@
 #include "projectile.h"
 
 CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, vec2(round_to_int(Pos.x), round_to_int(Pos.y)))
+                         int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int MapID)
+        : CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, vec2(round_to_int(Pos.x), round_to_int(Pos.y)), MapID)
 {
 	m_Type = Type;
 	m_Direction.x = round_to_int(Dir.x*100.0f) / 100.0f;

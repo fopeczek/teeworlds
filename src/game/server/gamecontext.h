@@ -116,6 +116,8 @@ public:
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
+    int GetClientTeam(int ClientID);
+    void SetClientMapChange(int ClientID, bool team);
 
 	int m_LockTeams;
 

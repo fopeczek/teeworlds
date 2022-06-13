@@ -15,6 +15,8 @@ protected:
 	int m_TickSpeed;
 
 public:
+    int LobbyMapID=1;
+    int MainMapID=0;
 	/*
 		Structure: CClientInfo
 	*/
@@ -105,6 +107,9 @@ public:
 	virtual bool IsClientReady(int ClientID) const = 0;
 	virtual bool IsClientPlayer(int ClientID) const = 0;
 	virtual bool IsClientSpectator(int ClientID) const = 0;
+
+    virtual int GetClientTeam(int ClientID) = 0;
+    virtual void SetClientMapChange(int ClientID, bool team)=0;
 
 	virtual const char *GameType() const = 0;
 	virtual const char *Version() const = 0;

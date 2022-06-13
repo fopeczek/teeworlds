@@ -12,7 +12,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
 IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 
-CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpec)
+CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpec, int MapChange)
 {
 	m_pGameServer = pGameServer;
 	m_RespawnTick = Server()->Tick();
@@ -20,7 +20,17 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_ScoreStartTick = Server()->Tick();
 	m_pCharacter = 0;
 	m_ClientID = ClientID;
-	m_Team = AsSpec ? TEAM_SPECTATORS : GameServer()->m_pController->GetStartTeam();
+    if (MapChange==-3) {
+        m_Team = AsSpec ? TEAM_SPECTATORS : GameServer()->m_pController->GetStartTeam();
+    } else {
+//        if (MapChange==TEAM_BLUE){
+//            GameServer()->m_pController->m_aTeamSize[TEAM_RED]--;
+//        } else if (MapChange==TEAM_RED){
+//            GameServer()->m_pController->m_aTeamSize[TEAM_BLUE]--;
+//        }
+        GameServer()->m_pController->m_aTeamSize[MapChange]++;
+        m_Team = MapChange;
+    }
 	m_SpecMode = SPEC_FREEVIEW;
 	m_SpectatorID = -1;
 	m_pSpecFlag = 0;
@@ -468,7 +478,7 @@ void CPlayer::TryRespawn()
 		return;
 
 	m_Spawning = false;
-	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
+    m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World, MapID);
 	m_pCharacter->Spawn(this, SpawnPos);
     GameServer()->CreatePlayerSpawn(SpawnPos, MapID);
 }
