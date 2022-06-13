@@ -1359,14 +1359,26 @@ int CServer::Run()
 	//
 	m_PrintCBIndex = Console()->RegisterPrintCallback(Config()->m_ConsoleOutputLevel, SendRconLineAuthed, this);
 
-	InitMapList();
+    // list maps
+    m_pMapListHeap = new CHeap();
+    CSubdirCallbackUserdata Userdata;
+    Userdata.m_pServer = this;
+    str_copy(Userdata.m_aName, "", sizeof(Userdata.m_aName));
+    m_pStorage->ListDirectory(IStorage::TYPE_ALL, "maps/", MapListEntryCallback, &Userdata);
 
-	// load map
-	if(!LoadMap(Config()->m_SvMap))
-	{
-		dbg_msg("server", "failed to load map. mapname='%s'", Config()->m_SvMap);
-		return -1;
-	}
+    // load map
+    if(!LoadMap(Config()->m_SvMap))
+    {
+        dbg_msg("server", "failed to load map. mapname='%s'", Config()->m_SvMap);
+        return -1;
+    }
+
+    // load map
+    if(!LoadMap(Config()->m_SvLobby))
+    {
+        dbg_msg("server", "failed to load map. mapname='%s'", Config()->m_SvLobby);
+        return -1;
+    }
     m_vMapData[MAP_DEFAULT_ID].m_MapChunksPerRequest = Config()->m_SvMapDownloadSpeed;
 
 	// start server
@@ -1533,13 +1545,6 @@ void CServer::ChangeClientMap(int ClientID)
     GameServer()->OnInitMap(m_aClients[ClientID].m_NextMapID);
 }
 
-struct CSubdirCallbackUserdata
-{
-	CServer *m_pServer;
-	char m_aName[IConsole::TEMPMAP_NAME_LENGTH];
-	bool m_StandardOnly;
-};
-
 int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType, void *pUser)
 {
 	CSubdirCallbackUserdata *pUserdata = (CSubdirCallbackUserdata *)pUser;
@@ -1557,7 +1562,6 @@ int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType,
 	if(IsDir)
 	{
 		CSubdirCallbackUserdata Userdata;
-		Userdata.m_StandardOnly = pUserdata->m_StandardOnly;
 		Userdata.m_pServer = pThis;
 		str_copy(Userdata.m_aName, aFilename, sizeof(Userdata.m_aName));
 		char aFindPath[IO_MAX_PATH_LENGTH];
@@ -1570,9 +1574,6 @@ int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType,
 	if(!pSuffix) // not ending with .map
 		return 0;
 	aFilename[pSuffix - aFilename] = 0; // remove suffix
-
-	if(pUserdata->m_StandardOnly && !pThis->m_MapChecker.IsStandardMap(aFilename))
-		return 0;
 
 	CMapListEntry *pEntry = (CMapListEntry *)pThis->m_pMapListHeap->Allocate(sizeof(CMapListEntry));
 	pThis->m_NumMapEntries++;
@@ -1587,24 +1588,6 @@ int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType,
 	str_copy(pEntry->m_aName, aFilename, sizeof(pEntry->m_aName));
 
 	return 0;
-}
-
-void CServer::InitMapList()
-{
-	m_pMapListHeap = new CHeap();
-
-	CSubdirCallbackUserdata Userdata;
-	if(str_comp(Config()->m_SvMaplist, "standard") == 0)
-		Userdata.m_StandardOnly = true;
-	else if(str_comp(Config()->m_SvMaplist, "all") == 0)
-		Userdata.m_StandardOnly = false;
-	else /* "none" or any other value */
-		return;
-
-	Userdata.m_pServer = this;
-	str_copy(Userdata.m_aName, "", sizeof(Userdata.m_aName));
-	m_pStorage->ListDirectory(IStorage::TYPE_ALL, "maps/", MapListEntryCallback, &Userdata);
-	dbg_msg("server", "%d maps added to maplist", m_NumMapEntries);
 }
 
 void CServer::ConKick(IConsole::IResult *pResult, void *pUser)

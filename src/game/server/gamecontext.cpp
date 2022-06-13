@@ -149,7 +149,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	float Radius = g_pData->m_Explosion.m_Radius;
 	float InnerRadius = 48.0f;
 	float MaxForce = g_pData->m_Explosion.m_MaxForce;
-	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, MapID);
 	for(int i = 0; i < Num; i++)
 	{
 		vec2 Diff = apEnts[i]->GetPos() - Pos;

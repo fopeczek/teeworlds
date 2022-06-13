@@ -190,6 +190,12 @@ public:
 		char m_aName[IConsole::TEMPMAP_NAME_LENGTH];
 	};
 
+    struct CSubdirCallbackUserdata
+    {
+        CServer *m_pServer;
+        char m_aName[IConsole::TEMPMAP_NAME_LENGTH];
+    };
+
 	CHeap *m_pMapListHeap;
 	CMapListEntry *m_pLastMapEntry;
 	CMapListEntry *m_pFirstMapEntry;
