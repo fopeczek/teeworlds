@@ -165,7 +165,7 @@ void CCharacter::HandleNinja()
 		const float Radius = GetProximityRadius() * 2.0f;
 		const vec2 Center = OldPos + (m_Pos - OldPos) * 0.5f;
 		CCharacter *aEnts[MAX_CLIENTS];
-		const int Num = GameWorld()->FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+		const int Num = GameWorld()->FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMapID());
 
 		for(int i = 0; i < Num; ++i)
 		{
@@ -313,7 +313,7 @@ void CCharacter::FireWeapon()
 			CCharacter *apEnts[MAX_CLIENTS];
 			int Hits = 0;
 			int Num = GameWorld()->FindEntities(ProjStartPos, GetProximityRadius()*0.5f, (CEntity**)apEnts,
-														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMapID());
 
 			for(int i = 0; i < Num; ++i)
 			{

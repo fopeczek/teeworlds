@@ -8,20 +8,20 @@
 #include <game/server/entities/flag.h>
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
-#include "ctf.h"
+#include "teamworlds.h"
 
-CGameControllerCTF::CGameControllerCTF(CGameContext *pGameServer)
+CGameControllerCTFC::CGameControllerCTFC(CGameContext *pGameServer)
 : IGameController(pGameServer)
 {
 	// game
 	m_apFlags[0] = 0;
 	m_apFlags[1] = 0;
-	m_pGameType = "CTF";
+	m_pGameType = "TeamUp";
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 }
 
 // balancing
-bool CGameControllerCTF::CanBeMovedOnBalance(int ClientID) const
+bool CGameControllerCTFC::CanBeMovedOnBalance(int ClientID) const
 {
 	CCharacter* Character = GameServer()->m_apPlayers[ClientID]->GetCharacter();
 	if(Character)
@@ -37,7 +37,7 @@ bool CGameControllerCTF::CanBeMovedOnBalance(int ClientID) const
 }
 
 // event
-int CGameControllerCTF::OnCharacterDeath(CCharacter *pVictim, CPlayer *pKiller, int WeaponID)
+int CGameControllerCTFC::OnCharacterDeath(CCharacter *pVictim, CPlayer *pKiller, int WeaponID)
 {
 	IGameController::OnCharacterDeath(pVictim, pKiller, WeaponID);
 	int HadFlag = 0;
@@ -63,30 +63,30 @@ int CGameControllerCTF::OnCharacterDeath(CCharacter *pVictim, CPlayer *pKiller, 
 	return HadFlag;
 }
 
-void CGameControllerCTF::OnFlagReturn(CFlag *pFlag)
+void CGameControllerCTFC::OnFlagReturn(CFlag *pFlag)
 {
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "flag_return");
 	GameServer()->SendGameMsg(GAMEMSG_CTF_RETURN, -1);
 }
 
-bool CGameControllerCTF::OnEntity(int Index, vec2 Pos, int MapID)
+bool CGameControllerCTFC::OnEntity(int Index, vec2 Pos, int MapID)
 {
-    if(IGameController::OnEntity(Index, Pos, MapID))
-        return true;
+	if(IGameController::OnEntity(Index, Pos, MapID))
+		return true;
 
-    int Team = -1;
-    if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
-    if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
-    if(Team == -1 || m_apFlags[Team])
-        return false;
+	int Team = -1;
+	if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
+	if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
+	if(Team == -1 || m_apFlags[Team])
+		return false;
 
-    CFlag *F = new CFlag(&GameServer()->m_World, Team, Pos, MapID);
-    m_apFlags[Team] = F;
-    return true;
+	CFlag *F = new CFlag(&GameServer()->m_World, Team, Pos, MapID);
+	m_apFlags[Team] = F;
+	return true;
 }
 
 // game
-bool CGameControllerCTF::DoWincheckMatch()
+bool CGameControllerCTFC::DoWincheckMatch()
 {
 	// check score win condition
 	if((m_GameInfo.m_ScoreLimit > 0 && (m_aTeamscore[TEAM_RED] >= m_GameInfo.m_ScoreLimit || m_aTeamscore[TEAM_BLUE] >= m_GameInfo.m_ScoreLimit)) ||
@@ -115,7 +115,7 @@ bool CGameControllerCTF::DoWincheckMatch()
 }
 
 // general
-void CGameControllerCTF::Snap(int SnappingClient)
+void CGameControllerCTFC::Snap(int SnappingClient)
 {
 	IGameController::Snap(SnappingClient);
 
@@ -155,7 +155,7 @@ void CGameControllerCTF::Snap(int SnappingClient)
 		pGameDataFlag->m_FlagCarrierBlue = FLAG_MISSING;
 }
 
-void CGameControllerCTF::Tick()
+void CGameControllerCTFC::Tick()
 {
 	IGameController::Tick();
 
