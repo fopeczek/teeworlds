@@ -532,7 +532,7 @@ void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 	if(m_LatestInput.m_TargetX == 0 && m_LatestInput.m_TargetY == 0)
 		m_LatestInput.m_TargetY = -1;
 
-	if(m_NumInputs > 2 && m_pPlayer->GetTeam() != TEAM_SPECTATORS)
+    if(m_NumInputs > 2 && m_pPlayer->GetTeam() != TEAM_SPECTATORS and Server()->GetClientClass(GetPlayer()->GetCID()) != Class::None and GetMapID()!=Server()->LobbyMapID)
 	{
         if (!m_pPlayer->m_Cheats.LockWeapons) {
             HandleWeaponSwitch();

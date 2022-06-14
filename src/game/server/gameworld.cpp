@@ -241,28 +241,28 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 }
 
 
-CEntity *CGameWorld::ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pNotThis)
+CEntity *CGameWorld::ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pNotThis, int MapID)
 {
-	// Find other players
-	float ClosestRange = Radius*2;
-	CEntity *pClosest = 0;
+    // Find other players
+    float ClosestRange = Radius*2;
+    CEntity *pClosest = 0;
 
-	CEntity *p = FindFirst(Type);
-	for(; p; p = p->TypeNext())
- 	{
-		if(p == pNotThis)
-			continue;
+    CEntity *p = GameServer()->m_World.FindFirst(Type);
+    for(; p; p = p->TypeNext())
+    {
+        if(p == pNotThis || p->GetMapID() != MapID)
+            continue;
 
-		float Len = distance(Pos, p->m_Pos);
-		if(Len < p->m_ProximityRadius+Radius)
-		{
-			if(Len < ClosestRange)
-			{
-				ClosestRange = Len;
-				pClosest = p;
-			}
-		}
-	}
+        float Len = distance(Pos, p->m_Pos);
+        if(Len < p->m_ProximityRadius+Radius)
+        {
+            if(Len < ClosestRange)
+            {
+                ClosestRange = Len;
+                pClosest = p;
+            }
+        }
+    }
 
-	return pClosest;
+    return pClosest;
 }

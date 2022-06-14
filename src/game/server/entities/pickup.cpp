@@ -47,63 +47,130 @@ void CPickup::Tick()
                 return;
         }
         // Check if a player intersected us
-        CCharacter *pChr = (CCharacter *) GameWorld()->ClosestEntity(m_Pos, 20.0f, CGameWorld::ENTTYPE_CHARACTER, 0);
+        CCharacter *pChr = (CCharacter *)GameServer()->m_World.ClosestEntity(m_Pos, 20.0f, CGameWorld::ENTTYPE_CHARACTER, 0, GetMapID());
         if (pChr && pChr->IsAlive()) {
             // player picked us up, is someone was hooking us, let them go
             bool Picked = false;
             switch (m_Type) {
                 case PICKUP_HEALTH:
-                    if (pChr->IncreaseHealth(1)) {
-                        Picked = true;
-                        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, -1, GetMapID());
+                    if (GetMapID()!=Server()->LobbyMapID) {
+                        if (pChr->IncreaseHealth(1)) {
+                            Picked = true;
+                            GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, -1, GetMapID());
+                        }
                     }
                     break;
 
                 case PICKUP_ARMOR:
-                    if (pChr->IncreaseArmor(1)) {
-                        Picked = true;
-                        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, -1, GetMapID());
+                    if (GetMapID()!=Server()->LobbyMapID) {
+                        if (pChr->IncreaseArmor(1)) {
+                            Picked = true;
+                            GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, -1, GetMapID());
+                        }
                     }
                     break;
 
                 case PICKUP_GRENADE:
-                    if (pChr->GiveWeapon(WEAPON_GRENADE, g_pData->m_Weapons.m_aId[WEAPON_GRENADE].m_Maxammo)) {
-                        Picked = true;
-                        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, -1, GetMapID());
-                        if (pChr->GetPlayer())
-                            GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_GRENADE);
+                    if (GetMapID()==Server()->LobbyMapID){
+                        CPickup *Hp[2];
+                        int num = GameWorld()->FindEntities(m_Pos, GetProximityRadius()*2.f, (CEntity**)Hp, 2, CGameWorld::ENTTYPE_PICKUP, Server()->LobbyMapID);
+                        if (num > 1) {
+                            for (int i = 0; i < 2; i++) {
+                                if (Hp[i]->m_Type == PICKUP_ARMOR) {
+                                    pChr->GetPlayer()->Become(Class::Tank);
+                                    char aBuf[256];
+                                    str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=tank map='%d",
+                                               pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                                    GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                                }
+                            }
+                        }else {
+                            pChr->GetPlayer()->Become(Class::Scout);
+                            char aBuf[256];
+                            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=scout map='%d",
+                                       pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                        }
+                    } else {
+                        if (pChr->GiveWeapon(WEAPON_GRENADE, g_pData->m_Weapons.m_aId[WEAPON_GRENADE].m_Maxammo)) {
+                            Picked = true;
+                            GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, -1, GetMapID());
+                            if (pChr->GetPlayer())
+                                GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_GRENADE);
+                        }
                     }
                     break;
                 case PICKUP_SHOTGUN:
-                    if (pChr->GiveWeapon(WEAPON_SHOTGUN, g_pData->m_Weapons.m_aId[WEAPON_SHOTGUN].m_Maxammo)) {
-                        Picked = true;
-                        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, -1, GetMapID());
-                        if (pChr->GetPlayer())
-                            GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_SHOTGUN);
+                    if (GetMapID()==Server()->LobbyMapID){
+                        CPickup *Hp[2];
+                        int num = GameWorld()->FindEntities(m_Pos, GetProximityRadius()*2.f, (CEntity**)Hp, 2, CGameWorld::ENTTYPE_PICKUP, Server()->LobbyMapID);
+                        if (num > 1){
+                            for (int i=0; i<2; i++) {
+                                if (Hp[i]->m_Type == PICKUP_HEALTH) {
+                                    pChr->GetPlayer()->Become(Class::Medic);
+                                    char aBuf[256];
+                                    str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=medic map='%d",
+                                               pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                                    GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                                } else if (Hp[i]->m_Type == PICKUP_ARMOR) {
+                                    pChr->GetPlayer()->Become(Class::Armorer);
+                                    char aBuf[256];
+                                    str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=armorer map='%d",
+                                               pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                                    GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                                }
+                            }
+                        } else {
+                            pChr->GetPlayer()->Become(Class::Spider);
+                            char aBuf[256];
+                            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=spider map='%d",
+                                       pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                        }
+                    } else {
+                        if (pChr->GiveWeapon(WEAPON_SHOTGUN, g_pData->m_Weapons.m_aId[WEAPON_SHOTGUN].m_Maxammo)) {
+                            Picked = true;
+                            GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, -1, GetMapID());
+                            if (pChr->GetPlayer())
+                                GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_SHOTGUN);
+                        }
                     }
                     break;
                 case PICKUP_LASER:
-                    if (pChr->GiveWeapon(WEAPON_LASER, g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Maxammo)) {
-                        Picked = true;
-                        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, -1, GetMapID());
-                        if (pChr->GetPlayer())
-                            GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_LASER);
+                    if (GetMapID()==Server()->LobbyMapID){
+                        pChr->GetPlayer()->Become(Class::Engineer);
+                        char aBuf[256];
+                        str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=engineer map='%d",
+                                   pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), GetMapID());
+                        GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+                    }else {
+                        if (pChr->GiveWeapon(WEAPON_LASER, g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Maxammo)) {
+                            Picked = true;
+                            GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, -1, GetMapID());
+                            if (pChr->GetPlayer())
+                                GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), WEAPON_LASER);
+                        }
                     }
                     break;
 
                 case PICKUP_NINJA: {
-                    Picked = true;
-                    // activate ninja on target player
-                    pChr->GiveNinja();
+                    if (GetMapID()==Server()->LobbyMapID){
+                        pChr->GetPlayer()->Become(Class::Hunter);
+                    } else {
+                        Picked = true;
+                        // activate ninja on target player
+                        pChr->GiveNinja();
 
-                    // loop through all players, setting their emotes
-                    CCharacter *pC = static_cast<CCharacter *>(GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER));
-                    for (; pC; pC = (CCharacter *) pC->TypeNext()) {
-                        if (pC != pChr)
-                            pC->SetEmote(EMOTE_SURPRISE, Server()->Tick() + Server()->TickSpeed());
+                        // loop through all players, setting their emotes
+                        CCharacter *pC = static_cast<CCharacter *>(GameWorld()->FindFirst(
+                                CGameWorld::ENTTYPE_CHARACTER));
+                        for (; pC; pC = (CCharacter *) pC->TypeNext()) {
+                            if (pC != pChr)
+                                pC->SetEmote(EMOTE_SURPRISE, Server()->Tick() + Server()->TickSpeed());
+                        }
+
+                        pChr->SetEmote(EMOTE_ANGRY, Server()->Tick() + 1200 * Server()->TickSpeed() / 1000);
                     }
-
-                    pChr->SetEmote(EMOTE_ANGRY, Server()->Tick() + 1200 * Server()->TickSpeed() / 1000);
                     break;
                 }
 
@@ -111,13 +178,14 @@ void CPickup::Tick()
                     break;
             };
 
-            if (Picked) {
+            if(Picked)
+            {
                 char aBuf[256];
-                str_format(aBuf, sizeof(aBuf), "pickup player='%d:%s' item=%d",
-                           pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), m_Type);
-                GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+                str_format(aBuf, sizeof(aBuf), "pickup player='%d:%s' item=%d map='%d",
+                           pChr->GetPlayer()->GetCID(), Server()->ClientName(pChr->GetPlayer()->GetCID()), m_Type, GetMapID());
+                GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/multimap", aBuf);
                 int RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
-                if (RespawnTime >= 0)
+                if(RespawnTime >= 0)
                     m_SpawnTick = Server()->Tick() + Server()->TickSpeed() * RespawnTime;
             }
         }

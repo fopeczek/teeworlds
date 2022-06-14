@@ -2080,6 +2080,62 @@ void CGameContext::ConResetLocks(IConsole::IResult *pResult, void *pUserData)
         }
     }
 }
+
+
+void CGameContext::ConSetClass(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    std::ostringstream msg (std::ostringstream::ate);
+    msg.str("Admin has changed your class to: ");
+    Class wanted_class = Class::None;
+    if (str_comp_nocase(pResult->GetString(1), "none") == 0){
+        wanted_class = Class::None;
+    } else if (str_comp_nocase(pResult->GetString(1), "engineer") == 0){
+        wanted_class = Class::Engineer;
+    } else if (str_comp_nocase(pResult->GetString(1), "scout") == 0){
+        wanted_class = Class::Scout;
+    } else if (str_comp_nocase(pResult->GetString(1), "hunter") == 0){
+        wanted_class = Class::Hunter;
+    } else if (str_comp_nocase(pResult->GetString(1), "tank") == 0){
+        wanted_class = Class::Tank;
+    } else if (str_comp_nocase(pResult->GetString(1), "spider") == 0){
+        wanted_class = Class::Spider;
+    } else if (str_comp_nocase(pResult->GetString(1), "medic") == 0){
+        wanted_class = Class::Medic;
+    } else if (str_comp_nocase(pResult->GetString(1), "armorer") == 0){
+        wanted_class = Class::Armorer;
+    } else if (str_comp_nocase(pResult->GetString(1), "necromancer") == 0) {
+        wanted_class = Class::Necromancer;
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            if (pSelf->Server()->GetClientClass(player->GetCID()) != wanted_class){
+                pSelf->Server()->SetClientClass(player->GetCID(), wanted_class);
+                player->GetCharacter()->Die(player->GetCID(), WEAPON_GAME);
+                msg<<pResult->GetString(1);
+                CNetMsg_Sv_Chat chatMsg;
+                chatMsg.m_Mode = CHAT_WHISPER;
+                chatMsg.m_ClientID = player->GetCID();
+                chatMsg.m_TargetID = player->GetCID();
+                std::string str_tmp = msg.str();
+                chatMsg.m_pMessage = str_tmp.c_str();
+                pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+            }
+        }
+    }
+}
+
+
 void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
@@ -2116,6 +2172,7 @@ void CGameContext::OnConsoleInit()
     Console()->Register("LockPosition", "?i[playerID]", CFGFLAG_SERVER, ConLockPosition, this, "Toggle lock of position for certain player");
     Console()->Register("ResetCheats", "?i[playerID]", CFGFLAG_SERVER, ConResetCheats, this, "Reset all cheats for certain player");
     Console()->Register("ResetLocks", "?i[playerID]", CFGFLAG_SERVER, ConResetLocks, this, "Reset all cheats for certain player");
+    Console()->Register("setClass", "is", CFGFLAG_SERVER, ConSetClass, this, "Manually set class of wanted player");
 
 	Console()->Register("add_vote", "s[option] r[command]", CFGFLAG_SERVER, ConAddVote, this, "Add a voting option");
 	Console()->Register("remove_vote", "s[option]", CFGFLAG_SERVER, ConRemoveVote, this, "remove a voting option");
@@ -2166,6 +2223,8 @@ void CGameContext::OnInit()
         m_pController = new CGameControllerDM(this);
 
     OnInitMap(Server()->MainMapID);//default map is 0
+
+    m_pController->RegisterChatCommands(CommandManager());
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 

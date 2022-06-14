@@ -84,6 +84,7 @@ class CGameContext : public IGameServer
     static void ConLockPosition(IConsole::IResult *pResult, void *pUserData);
     static void ConResetCheats(IConsole::IResult *pResult, void *pUserData);
     static void ConResetLocks(IConsole::IResult *pResult, void *pUserData);
+	static void ConSetClass(IConsole::IResult *pResult, void *pUserData);
 
 	static void NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 	static void RemoveCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);

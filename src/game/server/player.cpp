@@ -87,6 +87,12 @@ void CPlayer::Tick()
 		m_pCharacter = 0;
 	}
 
+    if (Server()->GetClientClass(GetCID())==Class::None){
+        Server()->SetClientMap(GetCID(), Server()->LobbyMapID);
+    } else {
+        Server()->SetClientMap(GetCID(), Server()->MainMapID);
+    }
+
 	if(!GameServer()->m_pController->IsGamePaused())
 	{
 		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpecMode == SPEC_FREEVIEW)
@@ -245,80 +251,80 @@ void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 
 void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 {
-	if(GameServer()->m_World.m_Paused)
-	{
-		m_PlayerFlags = NewInput->m_PlayerFlags;
-		return;
-	}
+    if(GameServer()->m_World.m_Paused)
+    {
+        m_PlayerFlags = NewInput->m_PlayerFlags;
+        return;
+    }
 
-	if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
-	{
-		// skip the input if chat is active
-		if(m_PlayerFlags&PLAYERFLAG_CHATTING)
-			return;
+    if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
+    {
+        // skip the input if chat is active
+        if(m_PlayerFlags&PLAYERFLAG_CHATTING)
+            return;
 
-		// reset input
-		if(m_pCharacter)
-			m_pCharacter->ResetInput();
+        // reset input
+        if(m_pCharacter)
+            m_pCharacter->ResetInput();
 
-		m_PlayerFlags = NewInput->m_PlayerFlags;
-		return;
-	}
+        m_PlayerFlags = NewInput->m_PlayerFlags;
+        return;
+    }
 
-	m_PlayerFlags = NewInput->m_PlayerFlags;
+    m_PlayerFlags = NewInput->m_PlayerFlags;
 
-	if(m_pCharacter)
-		m_pCharacter->OnDirectInput(NewInput);
+    if(m_pCharacter)
+        m_pCharacter->OnDirectInput(NewInput);
 
-	if(!m_pCharacter && m_Team != TEAM_SPECTATORS && (NewInput->m_Fire&1))
-		Respawn();
+    if(!m_pCharacter && m_Team != TEAM_SPECTATORS && (NewInput->m_Fire&1))
+        Respawn();
 
-	if(!m_pCharacter && m_Team == TEAM_SPECTATORS && (NewInput->m_Fire&1))
-	{
-		if(!m_ActiveSpecSwitch)
-		{
-			m_ActiveSpecSwitch = true;
-			if(m_SpecMode == SPEC_FREEVIEW)
-			{
-				CCharacter *pChar = (CCharacter *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_CHARACTER, 0);
-				CFlag *pFlag = (CFlag *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_FLAG, 0);
-				if(pChar || pFlag)
-				{
-					if(!pChar || (pFlag && pChar && distance(m_ViewPos, pFlag->GetPos()) < distance(m_ViewPos, pChar->GetPos())))
-					{
-						m_SpecMode = pFlag->GetTeam() == TEAM_RED ? SPEC_FLAGRED : SPEC_FLAGBLUE;
-						m_pSpecFlag = pFlag;
-						m_SpectatorID = -1;
-					}
-					else
-					{
-						m_SpecMode = SPEC_PLAYER;
-						m_pSpecFlag = 0;
-						m_SpectatorID = pChar->GetPlayer()->GetCID();
-					}
-				}
-			}
-			else
-			{
-				m_SpecMode = SPEC_FREEVIEW;
-				m_pSpecFlag = 0;
-				m_SpectatorID = -1;
-			}
-		}
-	}
-	else if(m_ActiveSpecSwitch)
-		m_ActiveSpecSwitch = false;
+    if(!m_pCharacter && m_Team == TEAM_SPECTATORS && (NewInput->m_Fire&1))
+    {
+        if(!m_ActiveSpecSwitch)
+        {
+            m_ActiveSpecSwitch = true;
+            if(m_SpecMode == SPEC_FREEVIEW)
+            {
+                CCharacter *pChar = (CCharacter *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_CHARACTER, 0, GameServer()->Server()->ClientMapID(m_ClientID));
+                CFlag *pFlag = (CFlag *)GameServer()->m_World.ClosestEntity(m_ViewPos, 6.0f*32, CGameWorld::ENTTYPE_FLAG, 0, GameServer()->Server()->ClientMapID(m_ClientID));
+                if(pChar || pFlag)
+                {
+                    if(!pChar || (pFlag && pChar && distance(m_ViewPos, pFlag->GetPos()) < distance(m_ViewPos, pChar->GetPos())))
+                    {
+                        m_SpecMode = pFlag->GetTeam() == TEAM_RED ? SPEC_FLAGRED : SPEC_FLAGBLUE;
+                        m_pSpecFlag = pFlag;
+                        m_SpectatorID = -1;
+                    }
+                    else
+                    {
+                        m_SpecMode = SPEC_PLAYER;
+                        m_pSpecFlag = 0;
+                        m_SpectatorID = pChar->GetPlayer()->GetCID();
+                    }
+                }
+            }
+            else
+            {
+                m_SpecMode = SPEC_FREEVIEW;
+                m_pSpecFlag = 0;
+                m_SpectatorID = -1;
+            }
+        }
+    }
+    else if(m_ActiveSpecSwitch)
+        m_ActiveSpecSwitch = false;
 
-	// check for activity
-	if(NewInput->m_Direction || m_LatestActivity.m_TargetX != NewInput->m_TargetX ||
-		m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
-		NewInput->m_Fire&1 || NewInput->m_Hook)
-	{
-		m_LatestActivity.m_TargetX = NewInput->m_TargetX;
-		m_LatestActivity.m_TargetY = NewInput->m_TargetY;
-		m_LastActionTick = Server()->Tick();
-		m_InactivityTickCounter = 0;
-	}
+    // check for activity
+    if(NewInput->m_Direction || m_LatestActivity.m_TargetX != NewInput->m_TargetX ||
+       m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
+       NewInput->m_Fire&1 || NewInput->m_Hook)
+    {
+        m_LatestActivity.m_TargetX = NewInput->m_TargetX;
+        m_LatestActivity.m_TargetY = NewInput->m_TargetY;
+        m_LastActionTick = Server()->Tick();
+        m_InactivityTickCounter = 0;
+    }
 }
 
 CCharacter *CPlayer::GetCharacter()
