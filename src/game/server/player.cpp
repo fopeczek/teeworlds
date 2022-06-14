@@ -45,6 +45,12 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_DeadSpecMode = false;
 	m_Spawning = false;
 	mem_zero(&m_Latency, sizeof(m_Latency));
+    m_Cheats.Godmode = Server()->ServerCheats.Godbox;
+    m_Cheats.AllWeapons = Server()->ServerCheats.Godbox;
+    m_Cheats.SuperHook = Server()->ServerCheats.Hookbox;
+    m_Cheats.FullAuto = Server()->ServerCheats.Autobox;
+    m_Cheats.SuperNinja = Server()->ServerCheats.Ninjabox;
+    m_Cheats.Jetpack = Server()->ServerCheats.Jetbox;
 }
 
 CPlayer::~CPlayer()

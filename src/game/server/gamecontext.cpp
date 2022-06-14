@@ -2135,6 +2135,274 @@ void CGameContext::ConSetClass(IConsole::IResult *pResult, void *pUserData) {
     }
 }
 
+void CGameContext::ConVoteGodmode(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf->Server()->ServerCheats.Godbox){
+        pSelf->Server()->ServerCheats.Godbox= false;
+    } else{
+        pSelf->Server()->ServerCheats.Godbox= true;
+    }
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            pSelf->m_apPlayers[i]->m_Cheats.Godmode= pSelf->Server()->ServerCheats.Godbox;
+            pSelf->m_apPlayers[i]->m_Cheats.AllWeapons = pSelf->Server()->ServerCheats.Godbox;
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now godmode is: ");
+            if (pSelf->Server()->ServerCheats.Godbox){
+                msg<<"on";
+            } else {
+                msg<<"off";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::ConVoteFullAuto(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf->Server()->ServerCheats.Autobox){
+        pSelf->Server()->ServerCheats.Autobox= false;
+    } else{
+        pSelf->Server()->ServerCheats.Autobox= true;
+    }
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            pSelf->m_apPlayers[i]->m_Cheats.FullAuto= pSelf->Server()->ServerCheats.Autobox;
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now auto fire is: ");
+            if (pSelf->Server()->ServerCheats.Autobox){
+                msg<<"on";
+            } else {
+                msg<<"off";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::ConVoteSuperHook(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf->Server()->ServerCheats.Hookbox){
+        pSelf->Server()->ServerCheats.Hookbox= false;
+    } else{
+        pSelf->Server()->ServerCheats.Hookbox= true;
+    }
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            pSelf->m_apPlayers[i]->m_Cheats.SuperHook= pSelf->Server()->ServerCheats.Hookbox;
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now super hook is: ");
+            if (pSelf->Server()->ServerCheats.Hookbox){
+                msg<<"on";
+            } else {
+                msg<<"off";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::ConVoteJetpack(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf->Server()->ServerCheats.Jetbox){
+        pSelf->Server()->ServerCheats.Jetbox= false;
+    } else{
+        pSelf->Server()->ServerCheats.Jetbox= true;
+    }
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            pSelf->m_apPlayers[i]->m_Cheats.Jetpack= pSelf->Server()->ServerCheats.Jetbox;
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now jetpack is: ");
+            if (pSelf->Server()->ServerCheats.Jetbox){
+                msg<<"on";
+            } else {
+                msg<<"off";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::ConVoteSuperNinja(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf->Server()->ServerCheats.Ninjabox){
+        pSelf->Server()->ServerCheats.Ninjabox= false;
+    } else{
+        pSelf->Server()->ServerCheats.Ninjabox= true;
+    }
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now super ninja is: ");
+            if (pSelf->Server()->ServerCheats.Ninjabox) {
+                pSelf->m_apPlayers[i]->m_Cheats.SuperNinja = true;
+                pSelf->m_apPlayers[i]->GetCharacter()->GiveNinja();
+                msg<<"on";
+            } else{
+                pSelf->m_apPlayers[i]->m_Cheats.SuperNinja = false;
+                pSelf->m_apPlayers[i]->GetCharacter()->LoseNinja();
+                msg<<"off";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::ConDoActivityCheck(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    std::ostringstream msg (std::ostringstream::ate);
+    msg.str("Now AFK is: ");
+    if (pSelf->Server()->AFK) {
+        pSelf->Server()->AFK = false;
+        msg<<"not allowed";
+    } else {
+        pSelf->Server()->AFK = true;
+        msg<<"allowed";
+    }
+    for (int i =0; i < MAX_PLAYERS; i++){
+        if (pSelf->m_apPlayers[i]){
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_NONE;
+            chatMsg.m_ClientID = -1;
+            chatMsg.m_TargetID = i;
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+        }
+    }
+}
+
+void CGameContext::addVote(const char *pDescription, const char *pCommand,void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    if(pSelf->m_NumVoteOptions == MAX_VOTE_OPTIONS)
+    {
+        pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", "maximum number of vote options reached");
+        return;
+    }
+
+    // check for valid option
+    if(!pSelf->Console()->LineIsValid(pCommand) || str_length(pCommand) >= VOTE_CMD_LENGTH)
+    {
+        char aBuf[256];
+        str_format(aBuf, sizeof(aBuf), "skipped invalid command '%s'", pCommand);
+        pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+        return;
+    }
+
+    pDescription = str_skip_whitespaces_const(pDescription);
+    if(str_length(pDescription) >= VOTE_DESC_LENGTH || *pDescription == 0)
+    {
+        char aBuf[256];
+        str_format(aBuf, sizeof(aBuf), "skipped invalid option '%s'", pDescription);
+        pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+        return;
+    }
+
+    // check for duplicate entry
+    for(CVoteOptionServer *pOption = pSelf->m_pVoteOptionFirst; pOption; pOption = pOption->m_pNext)
+    {
+        if(str_comp_nocase(pDescription, pOption->m_aDescription) == 0)
+        {
+            char aBuf[256];
+            str_format(aBuf, sizeof(aBuf), "option '%s' already exists", pDescription);
+            pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+            return;
+        }
+    }
+
+    // add the option
+    ++pSelf->m_NumVoteOptions;
+    int Len = str_length(pCommand);
+
+    CVoteOptionServer *pOption = (CVoteOptionServer *)pSelf->m_pVoteOptionHeap->Allocate(sizeof(CVoteOptionServer) + Len);
+    pOption->m_pNext = 0;
+    pOption->m_pPrev = pSelf->m_pVoteOptionLast;
+    if(pOption->m_pPrev)
+        pOption->m_pPrev->m_pNext = pOption;
+    pSelf->m_pVoteOptionLast = pOption;
+    if(!pSelf->m_pVoteOptionFirst)
+        pSelf->m_pVoteOptionFirst = pOption;
+
+    str_copy(pOption->m_aDescription, pDescription, sizeof(pOption->m_aDescription));
+    mem_copy(pOption->m_aCommand, pCommand, Len+1);
+    char aBuf[256];
+    str_format(aBuf, sizeof(aBuf), "added option '%s' '%s'", pOption->m_aDescription, pOption->m_aCommand);
+    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+
+    // inform clients about added option
+    CNetMsg_Sv_VoteOptionAdd OptionMsg;
+    OptionMsg.m_pDescription = pOption->m_aDescription;
+    pSelf->Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, -1);
+}
+
+
+void CGameContext::ConVoteResetCheat(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    pSelf->Server()->ServerCheats.Ninjabox= false;
+    pSelf->Server()->ServerCheats.Autobox= false;
+    pSelf->Server()->ServerCheats.Godbox= false;
+    pSelf->Server()->ServerCheats.Jetbox= false;
+    pSelf->Server()->ServerCheats.Hookbox= false;
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (pSelf->m_apPlayers[i]) {
+            pSelf->m_apPlayers[i]->m_Cheats.Godmode = false;
+            pSelf->m_apPlayers[i]->m_Cheats.AllWeapons = false;
+            pSelf->m_apPlayers[i]->m_Cheats.FullAuto = false;
+            pSelf->m_apPlayers[i]->m_Cheats.SuperNinja = false;
+            pSelf->m_apPlayers[i]->GetCharacter()->LoseNinja();
+            pSelf->m_apPlayers[i]->m_Cheats.Jetpack = false;
+            pSelf->m_apPlayers[i]->m_Cheats.NoSelfDamage = false;
+            pSelf->m_apPlayers[i]->m_Cheats.SuperHook = false;
+        }
+    }
+}
+
+void CGameContext::SetupVoting(void *pUserData) {
+    addVote("Toggle god mode", "vote_godmode",pUserData);
+    addVote("Toggle full auto fire", "vote_fullauto",pUserData);
+    addVote("Toggle jetpack", "vote_jetpack",pUserData);
+    addVote("Toggle ninja", "vote_superninja",pUserData);
+    addVote("Toggle infinite hook", "vote_superhook",pUserData);
+    addVote("Toggle AFK", "allowAFK",pUserData);
+    addVote("Return to vanilla", "reset_game_cheats",pUserData);
+    addVote("Shuffle teams", "shuffle_teams",pUserData);
+//    addVote("Change map to ctf1", "")
+}
+
 
 void CGameContext::OnConsoleInit()
 {
@@ -2174,10 +2442,20 @@ void CGameContext::OnConsoleInit()
     Console()->Register("ResetLocks", "?i[playerID]", CFGFLAG_SERVER, ConResetLocks, this, "Reset all cheats for certain player");
     Console()->Register("setClass", "is", CFGFLAG_SERVER, ConSetClass, this, "Manually set class of wanted player");
 
+    //----------Voting---------------
+    Console()->Register("vote_godmode", "", CFGFLAG_SERVER, ConVoteGodmode, this, "");
+    Console()->Register("vote_fullauto", "", CFGFLAG_SERVER, ConVoteFullAuto, this, "");
+    Console()->Register("vote_superhook", "?i[player id]", CFGFLAG_SERVER, ConVoteSuperHook, this, "");
+    Console()->Register("vote_jetpack", "", CFGFLAG_SERVER, ConVoteJetpack, this, "");
+    Console()->Register("vote_superninja", "", CFGFLAG_SERVER, ConVoteSuperNinja, this, "");
+    Console()->Register("reset_game_cheats", "", CFGFLAG_SERVER, ConVoteResetCheat, this, "");
+    Console()->Register("toggle_AFK", "", CFGFLAG_SERVER, ConDoActivityCheck, this, "");
+
 	Console()->Register("add_vote", "s[option] r[command]", CFGFLAG_SERVER, ConAddVote, this, "Add a voting option");
 	Console()->Register("remove_vote", "s[option]", CFGFLAG_SERVER, ConRemoveVote, this, "remove a voting option");
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
+    SetupVoting(this);
 }
 
 void CGameContext::NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext)

@@ -16,6 +16,16 @@ protected:
 	int m_TickSpeed;
 
 public:
+    struct ServerAvalableCheats{
+        bool Godbox = false;
+        bool Autobox = false;
+        bool Jetbox = false;
+        bool Ninjabox = false;
+        bool Hookbox = false;
+    };
+    ServerAvalableCheats ServerCheats;
+
+    bool AFK = false;
     int LobbyMapID=1;
     int MainMapID=0;
 	/*

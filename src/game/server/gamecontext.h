@@ -86,6 +86,18 @@ class CGameContext : public IGameServer
     static void ConResetLocks(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetClass(IConsole::IResult *pResult, void *pUserData);
 
+	//------------Voting------------
+	static void ConVoteGodmode(IConsole::IResult *pResult, void *pUserData);
+	static void ConVoteFullAuto(IConsole::IResult *pResult, void *pUserData);
+	static void ConVoteSuperHook(IConsole::IResult *pResult, void *pUserData);
+	static void ConVoteJetpack(IConsole::IResult *pResult, void *pUserData);
+	static void ConVoteSuperNinja(IConsole::IResult *pResult, void *pUserData);
+	static void ConVoteResetCheat(IConsole::IResult *pResult, void *pUserData);
+	static void ConDoActivityCheck(IConsole::IResult *pResult, void *pUserData);
+
+	static void addVote(const char *pDescription, const char *pCommand,void *pUserData);
+	static void SetupVoting(void *pUserData);
+
 	static void NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 	static void RemoveCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 
