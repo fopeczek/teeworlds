@@ -314,6 +314,14 @@ void CServer::SetClientScore(int ClientID, int Score)
 	m_aClients[ClientID].m_Score = Score;
 }
 
+void CServer::SetClientClass(int ClientID, Class who){
+    m_aClients[ClientID].MyClass=who;
+}
+
+Class CServer::GetClientClass(int ClientID){
+    return m_aClients[ClientID].MyClass;
+}
+
 void CServer::SetClientMap(int ClientID, int MapID)
 {
     if(ClientID < 0 || ClientID >= MAX_CLIENTS || MapID < 0 || MapID >= (int)m_vpMap.size())

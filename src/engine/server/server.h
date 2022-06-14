@@ -132,6 +132,8 @@ public:
 		int m_Authed;
 		int m_AuthTries;
 
+        Class MyClass;
+
 		int m_MapChunk;
 		bool m_NoRconNote;
 		bool m_Quitting;
@@ -243,6 +245,10 @@ public:
 	int ClientCountry(int ClientID) const;
 	bool ClientIngame(int ClientID) const;
     int ClientMapID(int ClientID) const override;
+
+
+    virtual Class GetClientClass(int ClientID);
+    virtual void SetClientClass(int ClientID, Class who);
 
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
 

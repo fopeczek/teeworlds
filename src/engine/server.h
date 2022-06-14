@@ -4,6 +4,7 @@
 #define ENGINE_SERVER_H
 #include "kernel.h"
 #include "message.h"
+#include "game/server/player_classes.h"
 
 #include <engine/map.h>
 
@@ -37,6 +38,9 @@ public:
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) const = 0;
 	virtual int GetClientVersion(int ClientID) const = 0;
     virtual int ClientMapID(int ClientID) const = 0;
+
+    virtual Class GetClientClass(int ClientID) = 0;
+    virtual void SetClientClass(int ClientID, Class who) = 0;
 
     virtual IEngineMap* GetMap(int MapID) const = 0;
 

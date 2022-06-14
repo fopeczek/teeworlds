@@ -6,6 +6,7 @@
 #include "gamecontext.h"
 #include "gamecontroller.h"
 #include "player.h"
+#include "player_classes.h"
 
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
@@ -481,4 +482,139 @@ void CPlayer::TryRespawn()
     m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World, MapID);
 	m_pCharacter->Spawn(this, SpawnPos);
     GameServer()->CreatePlayerSpawn(SpawnPos, MapID);
+    Become(Server()->GetClientClass(GetCID()));
 }
+
+void CPlayer::Become(Class who){
+    char aBuf[256];
+    switch (who) {
+        case Class::None:
+            Server()->SetClientClass(GetCID(), Class::None);
+            str_format(aBuf, sizeof(aBuf), "!it should not happen! player='%d:%s' class=none map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Scout:
+            Server()->SetClientClass(GetCID(), Class::Scout);
+            GetCharacter()->GiveWeapon(WEAPON_GRENADE, 10);
+            GetCharacter()->SetWeapon(WEAPON_GRENADE);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=scout map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Engineer:
+            Server()->SetClientClass(GetCID(), Class::Engineer);
+            GetCharacter()->GiveWeapon(WEAPON_LASER, 10);
+            GetCharacter()->SetWeapon(WEAPON_LASER);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=engineer map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Hunter:
+            Server()->SetClientClass(GetCID(), Class::Hunter);
+            GetCharacter()->GiveNinja();
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=hunter map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Spider:
+            Server()->SetClientClass(GetCID(), Class::Spider);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=spider map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Medic:
+            Server()->SetClientClass(GetCID(), Class::Medic);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=medic map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Armorer:
+            Server()->SetClientClass(GetCID(), Class::Armorer);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=armorer map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+        case Class::Tank:
+            Server()->SetClientClass(GetCID(), Class::Tank);
+            str_format(aBuf, sizeof(aBuf), "chose class player='%d:%s' class=tank map='%d",
+                       m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
+            GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
+            break;
+    }
+    int new_class_id=0;
+    switch(who){
+        case Class::None:
+            new_class_id=0;
+            break;
+        case Class::Hunter:
+            new_class_id=1;
+            break;
+        case Class::Medic:
+            new_class_id=2;
+            break;
+        case Class::Scout:
+            new_class_id=3;
+            break;
+        case Class::Tank:
+            new_class_id=4;
+            break;
+        case Class::Spider:
+            new_class_id=5;
+            break;
+        case Class::Engineer:
+            new_class_id=6;
+            break;
+        case Class::Armorer:
+            new_class_id=7;
+            break;
+    }
+    // update client infos (others before local)
+    CNetMsg_Sv_ClientInfo NewClientInfoMsg;
+    NewClientInfoMsg.m_ClientID = m_ClientID;
+    NewClientInfoMsg.m_Local = 0;
+    NewClientInfoMsg.m_Team = m_Team;
+    NewClientInfoMsg.m_pName = Server()->ClientName(m_ClientID);
+    NewClientInfoMsg.m_pClan = Server()->ClientClan(m_ClientID);
+    NewClientInfoMsg.m_Country = Server()->ClientCountry(m_ClientID);
+    NewClientInfoMsg.m_ClassID = new_class_id;
+    NewClientInfoMsg.m_Silent = false;
+
+    for(int p = 0; p < NUM_SKINPARTS; p++)
+    {
+        NewClientInfoMsg.m_apSkinPartNames[p] = m_TeeInfos.m_aaSkinPartNames[p];
+        NewClientInfoMsg.m_aUseCustomColors[p] = m_TeeInfos.m_aUseCustomColors[p];
+        NewClientInfoMsg.m_aSkinPartColors[p] = m_TeeInfos.m_aSkinPartColors[p];
+    }
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        // new info for others
+        if(Server()->ClientIngame(i))
+            Server()->SendPackMsg(&NewClientInfoMsg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
+
+        if(i == m_ClientID || !GameServer()->m_apPlayers[i] || (!Server()->ClientIngame(i) && !GameServer()->m_apPlayers[i]->IsDummy()))
+            continue;
+
+        // existing infos for new player
+        CNetMsg_Sv_ClientInfo ClientInfoMsg;
+        ClientInfoMsg.m_ClientID = i;
+        ClientInfoMsg.m_Local = 0;
+        ClientInfoMsg.m_pName = Server()->ClientName(i);
+        ClientInfoMsg.m_pClan = Server()->ClientClan(i);
+        ClientInfoMsg.m_Country = Server()->ClientCountry(i);
+        ClientInfoMsg.m_ClassID = new_class_id;
+        ClientInfoMsg.m_Silent = false;
+        if (GameServer()->m_apPlayers[i]) {
+            ClientInfoMsg.m_Team = GameServer()->m_apPlayers[i]->GetTeam();
+            for (int p = 0; p < NUM_SKINPARTS; p++) {
+                ClientInfoMsg.m_apSkinPartNames[p] = GameServer()->m_apPlayers[i]->m_TeeInfos.m_aaSkinPartNames[p];
+                ClientInfoMsg.m_aUseCustomColors[p] = GameServer()->m_apPlayers[i]->m_TeeInfos.m_aUseCustomColors[p];
+                ClientInfoMsg.m_aSkinPartColors[p] = GameServer()->m_apPlayers[i]->m_TeeInfos.m_aSkinPartColors[p];
+            }
+        }
+        Server()->SendPackMsg(&ClientInfoMsg, MSGFLAG_VITAL|MSGFLAG_NORECORD, m_ClientID);
+    }
+    NewClientInfoMsg.m_Local = 1;
+    Server()->SendPackMsg(&NewClientInfoMsg, MSGFLAG_VITAL|MSGFLAG_NORECORD, m_ClientID);
+}
+
