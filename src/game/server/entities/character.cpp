@@ -555,6 +555,13 @@ void CCharacter::ResetInput()
 	m_LatestPrevInput = m_LatestInput = m_Input;
 }
 
+void CCharacter::Teleport(vec2 where){
+	m_Pos=where;
+	m_Core.m_Pos=where;
+	m_Core.m_Vel=vec2(0,0);
+	Tick();
+}
+
 void CCharacter::Tick()
 {
 	if(m_Health<10 and m_pPlayer->m_Cheats.Godmode){
@@ -768,93 +775,94 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon)
 {
-	if (!m_pPlayer->m_Cheats.Godmode) {
-		m_Core.m_Vel += Force;
+	m_Core.m_Vel += Force;
 
-		if (From >= 0) {
-			if (GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
-				return false;
-		} else {
-			int Team = TEAM_RED;
-			if (From == PLAYER_TEAM_BLUE)
-				Team = TEAM_BLUE;
-			if (GameServer()->m_pController->IsFriendlyTeamFire(m_pPlayer->GetTeam(), Team))
-				return false;
-		}
-
-		// m_pPlayer only inflicts half damage on self
-		if (From == m_pPlayer->GetCID()) {
-            Dmg = maximum(1, Dmg / 2);
-            if (m_pPlayer->m_Cheats.NoSelfDamage){
-                Dmg=0;
-            }
-        } else {
-            if (m_pPlayer->m_Cheats.NoEnemyDamage){
-                Dmg=0;
-            }
-        }
-
-		int OldHealth = m_Health, OldArmor = m_Armor;
-		if (Dmg) {
-			if (m_Armor) {
-				if (Dmg > 1) {
-					m_Health--;
-					Dmg--;
-				}
-
-				if (Dmg > m_Armor) {
-					Dmg -= m_Armor;
-					m_Armor = 0;
-				} else {
-					m_Armor -= Dmg;
-					Dmg = 0;
-				}
-			}
-
-			m_Health -= Dmg;
-		}
-
-		// create healthmod indicator
-		GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), Source, OldHealth - m_Health, OldArmor - m_Armor,
-								   From == m_pPlayer->GetCID(), GetMapID());
-
-		// do damage Hit sound
-		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
-			int64 Mask = CmaskOne(From);
-			for (int i = 0; i < MAX_CLIENTS; i++) {
-				if (GameServer()->m_apPlayers[i] && (GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS ||
-													 GameServer()->m_apPlayers[i]->m_DeadSpecMode) &&
-					GameServer()->m_apPlayers[i]->GetSpectatorID() == From)
-					Mask |= CmaskOne(i);
-			}
-			GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask, GetMapID());
-		}
-
-		// check for death
-		if (m_Health <= 0) {
-			Die(From, Weapon);
-
-			// set attacker's face to happy (taunt!)
-			if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
-				CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
-				if (pChr) {
-					pChr->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
-				}
-			}
-
+	if (From >= 0) {
+		if (GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 			return false;
+	} else {
+		int Team = TEAM_RED;
+		if (From == PLAYER_TEAM_BLUE)
+			Team = TEAM_BLUE;
+		if (GameServer()->m_pController->IsFriendlyTeamFire(m_pPlayer->GetTeam(), Team))
+			return false;
+	}
+
+	// m_pPlayer only inflicts half damage on self
+	if (From == m_pPlayer->GetCID()) {
+		Dmg = maximum(1, Dmg / 2);
+		if (m_pPlayer->m_Cheats.NoSelfDamage){
+			Dmg=0;
+		}
+	} else {
+		if (m_pPlayer->m_Cheats.NoEnemyDamage){
+			Dmg=0;
+		}
+	}
+
+	if (m_pPlayer->m_Cheats.Godmode){
+		Dmg=0;
+	}
+
+	int OldHealth = m_Health, OldArmor = m_Armor;
+	if (Dmg) {
+		if (m_Armor) {
+			if (Dmg > 1) {
+				m_Health--;
+				Dmg--;
+			}
+
+			if (Dmg > m_Armor) {
+				Dmg -= m_Armor;
+				m_Armor = 0;
+			} else {
+				m_Armor -= Dmg;
+				Dmg = 0;
+			}
 		}
 
-		if (Dmg > 2)
-			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, -1, GetMapID());
-		else
-			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT, -1, GetMapID());
-
-		SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
-
-		return true;
+		m_Health -= Dmg;
 	}
-	return false;
+
+	// create healthmod indicator
+	GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), Source, OldHealth - m_Health, OldArmor - m_Armor,
+							   From == m_pPlayer->GetCID(), GetMapID());
+
+	// do damage Hit sound
+	if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
+		int64 Mask = CmaskOne(From);
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			if (GameServer()->m_apPlayers[i] && (GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS ||
+												 GameServer()->m_apPlayers[i]->m_DeadSpecMode) &&
+				GameServer()->m_apPlayers[i]->GetSpectatorID() == From)
+				Mask |= CmaskOne(i);
+		}
+		GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask, GetMapID());
+	}
+
+	// check for death
+	if (m_Health <= 0) {
+		Die(From, Weapon);
+
+		// set attacker's face to happy (taunt!)
+		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From]) {
+			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
+			if (pChr) {
+				pChr->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+			}
+		}
+
+		return false;
+	}
+
+	if (Dmg > 2)
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, -1, GetMapID());
+	else
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT, -1, GetMapID());
+
+	SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
+
+	return true;
 }
 
 void CCharacter::Snap(int SnappingClient)
@@ -887,7 +895,11 @@ void CCharacter::Snap(int SnappingClient)
 	// set emote
 	if(m_EmoteStop < Server()->Tick())
 	{
-		SetEmote(EMOTE_NORMAL, -1);
+		if(Server()->GetClientSmile(m_pPlayer->GetCID())){
+			SetEmote(EMOTE_HAPPY, -1);
+		} else {
+			SetEmote(EMOTE_NORMAL, -1);
+		}
 	}
 
 	pCharacter->m_Emote = m_EmoteType;

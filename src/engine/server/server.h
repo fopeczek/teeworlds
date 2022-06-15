@@ -132,7 +132,9 @@ public:
 		int m_Authed;
 		int m_AuthTries;
 
-        Class MyClass;
+        Class m_Class;
+
+        bool m_Smile;
 
 		int m_MapChunk;
 		bool m_NoRconNote;
@@ -249,6 +251,9 @@ public:
 
     virtual Class GetClientClass(int ClientID);
     virtual void SetClientClass(int ClientID, Class who);
+
+    virtual bool GetClientSmile(int ClientID);
+    virtual void SetClientSmile(int ClientID, bool new_smile);
 
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
 

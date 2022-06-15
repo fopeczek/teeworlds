@@ -2391,13 +2391,138 @@ void CGameContext::ConVoteResetCheat(IConsole::IResult *pResult, void *pUserData
     }
 }
 
+
+void CGameContext::ConHappy(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player) {
+        if (player->GetCharacter()) {
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("Now you are: ");
+            if (pSelf->Server()->GetClientSmile(player->GetCID()) == true) {
+                pSelf->Server()->SetClientSmile(player->GetCID(), false);
+                msg<<"normal";
+            } else {
+                pSelf->Server()->SetClientSmile(player->GetCID(), true);
+                msg<<"happy";
+            }
+            CNetMsg_Sv_Chat chatMsg;
+            chatMsg.m_Mode = CHAT_WHISPER;
+            chatMsg.m_ClientID = player->GetCID();
+            chatMsg.m_TargetID = player->GetCID();
+            std::string str_tmp = msg.str();
+            chatMsg.m_pMessage = str_tmp.c_str();
+            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player->GetCID());
+        }
+    }
+}
+
+
+void CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player_from;
+    CPlayer *player_to;
+    if(pResult->NumArguments()>0) {
+        player_from = pSelf->m_apPlayers[pResult->GetInteger(0)];
+
+        if (pResult->NumArguments() > 1) {
+            int player_to_id = pResult->GetInteger(1);
+            player_to = pSelf->m_apPlayers[player_to_id];
+        } else {
+            for (int i = 0; i < MAX_PLAYERS; i++) {
+                if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                    player_to = pSelf->m_apPlayers[i];
+                    break;
+                }
+            }
+        }
+    }
+
+    if (player_from and player_to){
+        if (player_from->GetCharacter() and player_to->GetCharacter()) {
+            vec2 Tp_pos = player_to->GetCharacter()->GetPos() - vec2(0, 70);
+            player_from->GetCharacter()->Teleport(Tp_pos);
+
+            std::ostringstream msg (std::ostringstream::ate);
+            msg.str("You were teleported to: ");
+            IServer::CClientInfo Info;
+            if (pSelf->Server()->GetClientInfo(player_to->GetCID(), &Info)) {
+                msg << Info.m_pName;
+
+                CNetMsg_Sv_Chat chatMsg;
+                chatMsg.m_Mode = CHAT_WHISPER;
+                chatMsg.m_ClientID = player_from->GetCID();
+                chatMsg.m_TargetID = player_from->GetCID();
+                std::string str_tmp = msg.str();
+                chatMsg.m_pMessage = str_tmp.c_str();
+                pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, player_from->GetCID());
+            }
+        }
+    }
+}
+
+
+void CGameContext::ConTeleportAll(IConsole::IResult *pResult, void *pUserData) {
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player;
+    if (pResult->NumArguments() > 0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    } else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player = pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+
+    if (player){
+        if (player->GetCharacter()) {
+            vec2 Tp_pos = player->GetCharacter()->GetPos() - vec2(0, 70);
+            for (int i = 0;i < MAX_PLAYERS; i++){
+                if (pSelf->m_apPlayers[i] and pSelf->m_apPlayers[i] != player){
+                    if (pSelf->m_apPlayers[i]->GetCharacter()){
+                        pSelf->m_apPlayers[i]->GetCharacter()->Teleport(Tp_pos);
+                        Tp_pos-=vec2(0, 70);
+
+                        std::ostringstream msg (std::ostringstream::ate);
+                        msg.str("You were teleported to: ");
+                        IServer::CClientInfo Info;
+                        if (pSelf->Server()->GetClientInfo(player->GetCID(), &Info)) {
+                            msg << Info.m_pName;
+
+                            CNetMsg_Sv_Chat chatMsg;
+                            chatMsg.m_Mode = CHAT_WHISPER;
+                            chatMsg.m_ClientID = i;
+                            chatMsg.m_TargetID = i;
+                            std::string str_tmp = msg.str();
+                            chatMsg.m_pMessage = str_tmp.c_str();
+                            pSelf->Server()->SendPackMsg(&chatMsg, MSGFLAG_VITAL, i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void CGameContext::SetupVoting(void *pUserData) {
     addVote("Toggle god mode", "vote_godmode",pUserData);
     addVote("Toggle full auto fire", "vote_fullauto",pUserData);
     addVote("Toggle jetpack", "vote_jetpack",pUserData);
     addVote("Toggle ninja", "vote_superninja",pUserData);
     addVote("Toggle infinite hook", "vote_superhook",pUserData);
-    addVote("Toggle AFK", "allowAFK",pUserData);
+    addVote("Toggle AFK", "toggle_AFK",pUserData);
     addVote("Return to vanilla", "reset_game_cheats",pUserData);
     addVote("Shuffle teams", "shuffle_teams",pUserData);
 //    addVote("Change map to ctf1", "")
@@ -2441,6 +2566,9 @@ void CGameContext::OnConsoleInit()
     Console()->Register("ResetCheats", "?i[playerID]", CFGFLAG_SERVER, ConResetCheats, this, "Reset all cheats for certain player");
     Console()->Register("ResetLocks", "?i[playerID]", CFGFLAG_SERVER, ConResetLocks, this, "Reset all cheats for certain player");
     Console()->Register("setClass", "is", CFGFLAG_SERVER, ConSetClass, this, "Manually set class of wanted player");
+    Console()->Register("Happy", "?i[player id]", CFGFLAG_SERVER, ConHappy, this, "Toggle smile face");
+    Console()->Register("tp", "i?i", CFGFLAG_SERVER, ConTeleport, this, "Teleport one player to second");
+    Console()->Register("tp_all", "?i", CFGFLAG_SERVER, ConTeleportAll, this, "Teleport everyone to you");
 
     //----------Voting---------------
     Console()->Register("vote_godmode", "", CFGFLAG_SERVER, ConVoteGodmode, this, "");

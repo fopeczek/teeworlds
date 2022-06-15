@@ -85,6 +85,9 @@ class CGameContext : public IGameServer
     static void ConResetCheats(IConsole::IResult *pResult, void *pUserData);
     static void ConResetLocks(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetClass(IConsole::IResult *pResult, void *pUserData);
+	static void ConHappy(IConsole::IResult *pResult, void *pUserData);
+	static void ConTeleport(IConsole::IResult *pResult, void *pUserData);
+	static void ConTeleportAll(IConsole::IResult *pResult, void *pUserData);
 
 	//------------Voting------------
 	static void ConVoteGodmode(IConsole::IResult *pResult, void *pUserData);

@@ -59,6 +59,8 @@ public:
     void GiveNinja();
     void LoseNinja();
 
+    void Teleport(vec2 where);
+
 	void SetEmote(int Emote, int Tick);
 
 	bool IsAlive() const { return m_Alive; }

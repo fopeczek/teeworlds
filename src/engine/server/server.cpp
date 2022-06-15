@@ -315,11 +315,19 @@ void CServer::SetClientScore(int ClientID, int Score)
 }
 
 void CServer::SetClientClass(int ClientID, Class who){
-    m_aClients[ClientID].MyClass=who;
+    m_aClients[ClientID].m_Class=who;
 }
 
 Class CServer::GetClientClass(int ClientID){
-    return m_aClients[ClientID].MyClass;
+    return m_aClients[ClientID].m_Class;
+}
+
+bool CServer::GetClientSmile(int ClientID){
+    return m_aClients[ClientID].m_Smile;
+}
+
+void CServer::SetClientSmile(int ClientID, bool new_smile){
+    m_aClients[ClientID].m_Smile = new_smile;
 }
 
 void CServer::SetClientMap(int ClientID, int MapID)
@@ -728,7 +736,7 @@ int CServer::DelClientCallback(int ClientID, const char *pReason, void *pUser)
 		pThis->GameServer()->OnClientDrop(ClientID, pReason);
 	}
 
-    pThis->m_aClients[ClientID].MyClass = Class::None;
+    pThis->m_aClients[ClientID].m_Class = Class::None;
 	pThis->m_aClients[ClientID].m_State = CClient::STATE_EMPTY;
 	pThis->m_aClients[ClientID].m_aName[0] = 0;
 	pThis->m_aClients[ClientID].m_aClan[0] = 0;
