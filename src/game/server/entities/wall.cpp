@@ -463,19 +463,29 @@ void CWall::SpiderWebFortify() {
 void CWall::HammerHit(int Dmg, CPlayer *player) {
     if (player->GetTeam() != m_Team) {
         if (distance(player->GetCharacter()->GetPos(), m_Pos) <= player->GetCharacter()->GetProximityRadius() * 2.f) {
-            if (m_Done or m_SpiderWeb) {
+            if (m_Done) {
                 GameServer()->CreateDamage(m_Pos, player->GetCID(), player->GetCharacter()->GetPos(), Dmg, 0, false,
                                            GetMapID());
                 TakeDamage(Dmg, player->GetCID());
                 GameServer()->CreateSound(m_Pos, SOUND_HAMMER_HIT, -1, GetMapID());
+            } else {
+                GameServer()->CreateDamage(m_Pos, player->GetCID(), player->GetCharacter()->GetPos(), 1, 0, false,
+                                           GetMapID());
+                TakeDamage(1, player->GetCID());
+                GameServer()->CreateSound(m_Pos, SOUND_HAMMER_HIT, -1, GetMapID());
             }
         } else if (distance(player->GetCharacter()->GetPos(), m_From) <=
                    player->GetCharacter()->GetProximityRadius() * 2.f) {
-            if (m_Done or m_SpiderWeb) {
+            if (!m_SpiderWeb and m_Done) {
                 GameServer()->CreateDamage(m_From, player->GetCID(), player->GetCharacter()->GetPos(), Dmg, 0, false,
                                            GetMapID());
                 TakeDamage(Dmg, player->GetCID());
-                GameServer()->CreateSound(m_Pos, SOUND_HAMMER_HIT, -1, GetMapID());
+                GameServer()->CreateSound(m_From, SOUND_HAMMER_HIT, -1, GetMapID());
+            } else {
+                GameServer()->CreateDamage(m_From, player->GetCID(), player->GetCharacter()->GetPos(), 1, 0, false,
+                                           GetMapID());
+                TakeDamage(1, player->GetCID());
+                GameServer()->CreateSound(m_From, SOUND_HAMMER_HIT, -1, GetMapID());
             }
         }
     }

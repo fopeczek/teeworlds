@@ -12,6 +12,7 @@
 #include <engine/console.h>
 #include <engine/shared/protocol.h>
 #include <generated/protocol.h>
+#include "game/server/player_classes.h"
 
 class CTuneParam
 {
@@ -153,6 +154,8 @@ public:
 	vec2 m_Pos;
 	vec2 m_Vel;
 
+    Class m_Class;
+
 	vec2 m_HookDragVel;
 
 	vec2 m_HookPos;
@@ -172,7 +175,7 @@ public:
 
 	int m_TriggeredEvents;
 
-	void Init(CWorldCore *pWorld, CCollision *pCollision);
+	void Init(CWorldCore *pWorld, CCollision *pCollision, Class player_Class=Class::None);
 	void Reset();
 	void Tick(bool UseInput, AvailableCheats *pCheats=nullptr);
 	void Move();

@@ -1,6 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "gamecore.h"
+#include "game/server/player_classes.h"
 
 const char *CTuningParams::s_apNames[] =
 {
@@ -66,10 +67,11 @@ float VelocityRamp(float Value, float Start, float Range, float Curvature)
 
 const float CCharacterCore::PHYS_SIZE = 28.0f;
 
-void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision)
+void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, Class player_Class)
 {
 	m_pWorld = pWorld;
 	m_pCollision = pCollision;
+    m_Class = player_Class;
 }
 
 void CCharacterCore::Reset()
@@ -236,7 +238,7 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 		{
 			if(Hit&CCollision::COLFLAG_NOHOOK)
                 if (pCheats) {
-                    if (pCheats->SuperHook) {
+                    if (pCheats->SuperHook or m_Class==Class::Spider) {
                         GoingToHitGround = true;
                     } else {
                         GoingToRetract = true;

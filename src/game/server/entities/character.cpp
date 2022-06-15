@@ -68,7 +68,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Pos = Pos;
 
 	m_Core.Reset();
-	m_Core.Init(&GameWorld()->m_Core, GameServer()->Collision(GetMapID()));
+	m_Core.Init(&GameWorld()->m_Core, GameServer()->Collision(GetMapID()), Server()->GetClientClass(m_pPlayer->GetCID()));
 	m_Core.m_Pos = m_Pos;
 	GameWorld()->m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -264,9 +264,6 @@ void CCharacter::FireWeapon()
 	if (m_pPlayer->m_Cheats.FullAuto and m_ActiveWeapon!=WEAPON_NINJA)
 		m_ReloadTimer=0;
 
-    if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Engineer and m_ActiveWeapon == WEAPON_LASER) {
-        m_ReloadTimer=0;
-    }
 	if(m_ReloadTimer != 0)
 		return;
 
@@ -383,27 +380,63 @@ void CCharacter::FireWeapon()
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, -1, GetMapID());
 		} break;
 
-		case WEAPON_SHOTGUN:
-		{
-			int ShotSpread = 2;
+		case WEAPON_SHOTGUN: {
+            {
 
-			for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			{
-				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-				float a = angle(Direction);
-				a += Spreading[i+2];
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					vec2(cosf(a), sinf(a))*Speed,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage, false, 0, -1, WEAPON_SHOTGUN, GetMapID());
-			}
+                int ShotSpread = 2;
 
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, -1, GetMapID());
-		} break;
+                if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Spider) {
+                    if (!m_ActiveWall->FirstTryToFortify(Direction, m_pPlayer->GetCID())) {
+                        if (m_pPlayer->m_Spider_ActiveWebs < m_pPlayer->m_Spider_MaxActiveWebs or
+                            m_pPlayer->m_Cheats.Godmode) {
+                            if (m_ActiveWall->SpiderWeb(Direction)) {
+                                m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID(), true);
+                                for (int i = -ShotSpread; i <= ShotSpread; ++i) {
+                                    //                  middle  | middle right   |   middle left       | right end   | left end
+                                    float Spreading[] = {0, 0.070f * 3.5f, -0.070f * 3.5f, 0.185f * 3.5f,
+                                                         -0.185f * 3.5f};
+                                    float a = angle(Direction);
+                                    a += Spreading[i + 2];
+                                    float v = 1 - (absolute(i) / (float) ShotSpread);
+                                    float Speed = mix((float) GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+
+                                    if (i != -2) {
+                                        if (m_pPlayer->m_Spider_ActiveWebs < m_pPlayer->m_Spider_MaxActiveWebs or
+                                            m_pPlayer->m_Cheats.Godmode) {
+                                            if (m_ActiveWall->SpiderWeb(vec2(cosf(a), sinf(a)) * Speed)) {
+                                                m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID(),
+                                                                         true);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                            }
+                        } else {
+                            GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                        }
+                    }
+                } else if (Server()->GetClientClass(m_pPlayer->GetCID()) != Class::Spider) {
+
+                    for (int i = -ShotSpread; i <= ShotSpread; ++i) {
+                        float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
+                        float a = angle(Direction);
+                        a += Spreading[i + 2];
+                        float v = 1 - (absolute(i) / (float) ShotSpread);
+                        float Speed = mix((float) GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+                        new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+                                        m_pPlayer->GetCID(),
+                                        ProjStartPos,
+                                        vec2(cosf(a), sinf(a)) * Speed,
+                                        (int) (Server()->TickSpeed() * GameServer()->Tuning()->m_ShotgunLifetime),
+                                        g_pData->m_Weapons.m_Shotgun.m_pBase->m_Damage, false, 0, -1, WEAPON_SHOTGUN,
+                                        GetMapID());
+                    }
+                    GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, -1, GetMapID());
+                }
+            }
+        }break;
 
 		case WEAPON_GRENADE:
 		{
@@ -475,9 +508,13 @@ void CCharacter::FireWeapon()
             if (m_ActiveWeapon == WEAPON_LASER) {
                 take_ammo= false;
             }
-            if (m_pPlayer->m_Cheats.AllWeapons){
+        }else if (Server()->GetClientClass(GetPlayer()->GetCID())== Class::Spider){
+            if (m_ActiveWeapon == WEAPON_SHOTGUN){
                 take_ammo= false;
             }
+        }
+        if (m_pPlayer->m_Cheats.AllWeapons){
+            take_ammo= false;
         }
         if (take_ammo) {
             m_aWeapons[m_ActiveWeapon].m_Ammo--;
