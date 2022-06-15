@@ -66,6 +66,22 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+    // the player core for the physics
+    CCharacterCore m_Core;
+
+	class CWall *m_ActiveWall;
+
+    int m_Health;
+    int m_Armor;
+
+    struct WeaponStat
+    {
+        int m_AmmoRegenStart;
+        int m_Ammo;
+        bool m_Got;
+
+    } m_aWeapons[NUM_WEAPONS];
+    int m_ActiveWeapon;
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
@@ -76,15 +92,6 @@ private:
 	CEntity *m_apHitObjects[MAX_PLAYERS];
 	int m_NumObjectsHit;
 
-	struct WeaponStat
-	{
-		int m_AmmoRegenStart;
-		int m_Ammo;
-		bool m_Got;
-
-	} m_aWeapons[NUM_WEAPONS];
-
-	int m_ActiveWeapon;
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 
@@ -107,9 +114,6 @@ private:
 	int m_NumInputs;
 	int m_Jumped;
 
-	int m_Health;
-	int m_Armor;
-
 	int m_TriggeredEvents;
 
 	// ninja
@@ -121,8 +125,6 @@ private:
 		int m_OldVelAmount;
 	} m_Ninja;
 
-	// the player core for the physics
-	CCharacterCore m_Core;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From

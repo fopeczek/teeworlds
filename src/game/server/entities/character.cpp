@@ -10,6 +10,7 @@
 #include "character.h"
 #include "laser.h"
 #include "projectile.h"
+#include "wall.h"
 
 //input count
 struct CInputCount
@@ -79,6 +80,12 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Alive = true;
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
+
+    if (Server()->GetClientClass(GetPlayer()->GetCID())==Class::Spider){
+        m_ActiveWall = new CWall (GameWorld(), m_pPlayer->GetCID(), Server()->MainMapID, true);
+    } else{
+        m_ActiveWall = new CWall (GameWorld(), m_pPlayer->GetCID(), Server()->MainMapID);
+    }
 
 	return true;
 }
@@ -257,6 +264,9 @@ void CCharacter::FireWeapon()
 	if (m_pPlayer->m_Cheats.FullAuto and m_ActiveWeapon!=WEAPON_NINJA)
 		m_ReloadTimer=0;
 
+    if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Engineer and m_ActiveWeapon == WEAPON_LASER) {
+        m_ReloadTimer=0;
+    }
 	if(m_ReloadTimer != 0)
 		return;
 
@@ -269,6 +279,9 @@ void CCharacter::FireWeapon()
 
     if (m_pPlayer->m_Cheats.FullAuto or (m_pPlayer->m_Cheats.SuperNinja and m_ActiveWeapon == WEAPON_NINJA)){
         FullAuto = true;
+    }
+    if (Server()->GetClientClass(GetPlayer()->GetCID())==Class::Engineer and m_ActiveWeapon==WEAPON_LASER){
+        FullAuto = false;
     }
 
 	// check if we gonna fire
@@ -309,6 +322,19 @@ void CCharacter::FireWeapon()
 		case WEAPON_HAMMER:
 		{
 			GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, -1, GetMapID());
+
+            CWall *apWalls[MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls+MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs];
+            int manyWalls = GameWorld()->FindEntities(ProjStartPos, 10000000000.f,
+                                                      (CEntity **) apWalls,
+                                                      MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls+MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs,
+                                                      CGameWorld::ENTTYPE_LASER, GetMapID());
+
+            for (int i = 0; i < manyWalls; ++i) {
+                if (apWalls[i]){
+                    apWalls[i]->HeIsHealing(m_pPlayer);
+                    apWalls[i]->HammerHit(g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage, m_pPlayer);
+                }
+            }
 
 			CCharacter *apEnts[MAX_CLIENTS];
 			int Hits = 0;
@@ -392,10 +418,41 @@ void CCharacter::FireWeapon()
 		} break;
 
 		case WEAPON_LASER:
-		{
-            new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), GetMapID());
-			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, -1, GetMapID());
-		} break;
+        {
+            if (Server()->GetClientClass(GetPlayer()->GetCID())==Class::Engineer) {
+                if(m_pPlayer->m_Engineer_ActiveWalls < m_pPlayer->m_Engineer_MaxActiveWalls or m_pPlayer->m_Cheats.Godmode){
+                    if (m_pPlayer->m_Engineer_Wall_Editing) {
+                        int amm=m_aWeapons[m_ActiveWeapon].m_Ammo;
+                        if (m_aWeapons[m_ActiveWeapon].m_Ammo>4) {
+                            amm =5;
+                        }else{
+                            amm=m_aWeapons[m_ActiveWeapon].m_Ammo;
+                        }
+                        if (m_ActiveWall->EndWallEdit(amm)) {
+                            m_pPlayer->m_Engineer_ActiveWalls++;
+                            m_pPlayer->m_Engineer_Wall_Editing = false;
+                            m_aWeapons[m_ActiveWeapon].m_Ammo -= amm;
+                            m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID());
+                        } else {
+                            GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                            return;
+                        }
+                    } else {
+                        if(!m_ActiveWall->Created) {
+                            m_ActiveWall->StartWallEdit(Direction);
+                            m_pPlayer->m_Engineer_Wall_Editing = true;
+                        }
+                    }
+                    GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, -1, GetMapID());
+                } else{
+                    GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                    return;
+                }
+            } else {
+                new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), GetMapID());
+                GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, -1, GetMapID());
+            }
+        } break;
 
 		case WEAPON_NINJA:
 		{
@@ -412,9 +469,20 @@ void CCharacter::FireWeapon()
 
 	m_AttackTick = Server()->Tick();
 
-	if (!m_pPlayer->m_Cheats.AllWeapons)
-		if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
-			m_aWeapons[m_ActiveWeapon].m_Ammo--;
+    if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0) { // -1 == unlimited
+        bool take_ammo = true;
+        if (Server()->GetClientClass(GetPlayer()->GetCID()) == Class::Engineer) {
+            if (m_ActiveWeapon == WEAPON_LASER) {
+                take_ammo= false;
+            }
+            if (m_pPlayer->m_Cheats.AllWeapons){
+                take_ammo= false;
+            }
+        }
+        if (take_ammo) {
+            m_aWeapons[m_ActiveWeapon].m_Ammo--;
+        }
+    }
 
 	if(!m_ReloadTimer) {
         m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000;
@@ -790,7 +858,11 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 
 	// m_pPlayer only inflicts half damage on self
 	if (From == m_pPlayer->GetCID()) {
-		Dmg = maximum(1, Dmg / 2);
+        if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Engineer) {
+            //leave damage 2x more than normal
+        } else {
+            Dmg = maximum(1, Dmg / 2);
+        }
 		if (m_pPlayer->m_Cheats.NoSelfDamage){
 			Dmg=0;
 		}
