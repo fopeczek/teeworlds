@@ -66,6 +66,9 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+	int m_Tank_PistolHitTick;
+	int m_Tank_PistolShot = 0;
+
     // the player core for the physics
     CCharacterCore m_Core;
 

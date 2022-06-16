@@ -106,6 +106,11 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 	float Accel = Grounded ? m_pWorld->m_Tuning.m_GroundControlAccel : m_pWorld->m_Tuning.m_AirControlAccel;
 	float Friction = Grounded ? m_pWorld->m_Tuning.m_GroundFriction : m_pWorld->m_Tuning.m_AirFriction;
 
+    if (m_Class==Class::Tank){
+        Friction = Grounded ? m_pWorld->m_Tuning.m_GroundFriction+0.4f : m_pWorld->m_Tuning.m_AirFriction;
+        Accel -= Grounded ? 1.5f : 0.5f;
+    }
+
     if (pCheats) {
         if (!pCheats->LockPosition) {
             // handle input
@@ -121,10 +126,16 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
                         if (Grounded) {
                             m_TriggeredEvents |= COREEVENTFLAG_GROUND_JUMP;
                             m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse;
+                            if (m_Class==Class::Tank){
+                                m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse*0.75f;
+                            }
                             m_Jumped |= 1;
                         } else if (!(m_Jumped & 2)) {
                             m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
                             m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
+                            if (m_Class==Class::Tank){
+                                m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse*0.75f;
+                            }
                             if (!pCheats->Jetpack)
                                 m_Jumped |= 3;
                         }
@@ -163,10 +174,16 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
                     if (Grounded) {
                         m_TriggeredEvents |= COREEVENTFLAG_GROUND_JUMP;
                         m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse;
+                        if (m_Class==Class::Tank){
+                            m_Vel.y = -m_pWorld->m_Tuning.m_GroundJumpImpulse*0.75f;
+                        }
                         m_Jumped |= 1;
                     } else if (!(m_Jumped & 2)) {
                         m_TriggeredEvents |= COREEVENTFLAG_AIR_JUMP;
                         m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse;
+                        if (m_Class==Class::Tank){
+                            m_Vel.y = -m_pWorld->m_Tuning.m_AirJumpImpulse*0.75f;
+                        }
                         m_Jumped |= 3;
                     }
                 }
@@ -328,6 +345,14 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 			else
 				HookVel.x *= 0.75f;
 
+            if (m_Class==Class::Tank){
+                HookVel.y/=2.f;
+                HookVel.y+=0.2f;
+            }
+
+            if (m_Class==Class::Tank){
+                HookVel.x/=1.5f;
+            }
 			vec2 NewVel = m_Vel+HookVel;
 
 			// check if we are under the legal limit for the hook
@@ -367,7 +392,7 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 			// handle player <-> player collision
 			float Distance = distance(m_Pos, pCharCore->m_Pos);
 			vec2 Dir = normalize(m_Pos - pCharCore->m_Pos);
-			if(m_pWorld->m_Tuning.m_PlayerCollision && Distance < PHYS_SIZE*1.25f && Distance > 0.0f)
+			if(m_pWorld->m_Tuning.m_PlayerCollision && Distance < PHYS_SIZE*1.25f && Distance > 0.0f and m_Class!=Class::Tank)
 			{
 				float a = (PHYS_SIZE*1.45f - Distance);
 				float Velocity = 0.5f;
@@ -393,6 +418,10 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 
 					// add a little bit force to the guy who has the grip
 					m_HookDragVel -= Dir*Accel*0.25f;
+
+                    if (pCharCore->m_Class==Class::Tank){
+                        pCharCore->m_HookDragVel/=2;
+                    }
 				}
 			}
 		}

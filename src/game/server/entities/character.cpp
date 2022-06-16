@@ -378,6 +378,9 @@ void CCharacter::FireWeapon()
                             g_pData->m_Weapons.m_Gun.m_pBase->m_Damage, false, 0, -1, WEAPON_GUN, GetMapID());
 
             GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, -1, GetMapID());
+            if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Tank){
+                m_Tank_PistolShot ++;
+            }
         } break;
 
         case WEAPON_SHOTGUN: {
@@ -524,6 +527,15 @@ void CCharacter::FireWeapon()
         }
         if (m_pPlayer->m_Cheats.AllWeapons){
             take_ammo= false;
+        }
+        if (Server()->GetClientClass(GetPlayer()->GetCID())== Class::Tank){
+            if (m_ActiveWeapon == WEAPON_GUN){
+                if (m_Tank_PistolShot == 3){
+                    m_aWeapons[m_ActiveWeapon].m_Ammo--;
+                    m_Tank_PistolShot=0;
+                }
+                take_ammo= false;
+            }
         }
         if (take_ammo) {
             m_aWeapons[m_ActiveWeapon].m_Ammo--;
@@ -945,6 +957,23 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
     } else {
         if (m_pPlayer->m_Cheats.NoEnemyDamage){
             Dmg=0;
+        }
+    }
+
+    if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Tank){
+        if (Dmg > 1){
+            Dmg = round_to_int(Dmg / 2.f);
+        }else {
+            if (m_Tank_PistolHitTick + 500 <= Server()->Tick()){ //after 5 sec reset pistol hit
+                m_pPlayer->m_Tank_PistolHit = false;
+            }
+            if (m_pPlayer->m_Tank_PistolHit){
+                m_pPlayer->m_Tank_PistolHit = false;
+            } else {
+                Dmg = 0;
+                m_pPlayer->m_Tank_PistolHit = true;
+                m_Tank_PistolHitTick=Server()->Tick();
+            }
         }
     }
 
