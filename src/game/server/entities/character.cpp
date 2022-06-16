@@ -68,7 +68,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
     m_Pos = Pos;
 
     m_Core.Reset();
-    m_Core.Init(&GameWorld()->m_Core, GameServer()->Collision(GetMapID()), Server()->GetClientClass(m_pPlayer->GetCID()));
+    m_Core.Init(&GameWorld()->m_Core, GameServer()->Collision(GetMapID()), pPlayer->GetTeam(), GetMapID(), Server()->GetClientClass(m_pPlayer->GetCID()));
     m_Core.m_Pos = m_Pos;
     GameWorld()->m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -123,86 +123,109 @@ bool CCharacter::IsGrounded()
 
 void CCharacter::HandleNinja()
 {
-    if (!m_pPlayer->m_Cheats.SuperNinja) {
-        if (m_ActiveWeapon != WEAPON_NINJA)
-            return;
-    } else {
-        m_Ninja.m_ActivationTick=Server()->Tick();
+    if (m_pPlayer->m_Cheats.SuperNinja) {
+        m_Ninja.m_ActivationTick = Server()->Tick();
     }
+    if (m_ActiveWeapon != WEAPON_NINJA){
+        if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Hunter and !m_ShadowDimension) {
+            ++m_Ninja.m_ActivationTick;
+        }
+        m_Ninja.m_ActivationTick= clamp(m_Ninja.m_ActivationTick, 0, Server()->Tick());
+        return;
+    }
+
+
+    if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Hunter and !m_ShadowDimension){
+        m_Ninja.m_ActivationTick+=2;
+    } else if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Hunter and m_ShadowDimension){
+        if (Server()->Tick()%2==0){//if is odd
+            ++m_Ninja.m_ActivationTick;
+        }
+    }
+
+    m_Ninja.m_ActivationTick= clamp(m_Ninja.m_ActivationTick, 0, Server()->Tick());
 
 
     if((Server()->Tick() - m_Ninja.m_ActivationTick) > (g_pData->m_Weapons.m_Ninja.m_Duration * Server()->TickSpeed() / 1000))
     {
-        // time's up, return
-        m_aWeapons[WEAPON_NINJA].m_Got = false;
-        m_ActiveWeapon = m_LastWeapon;
+        if (Server()->GetClientClass(GetPlayer()->GetCID()) == Class::Hunter and m_ShadowDimension) {
+            RevealHunter(true);
+        } else if (Server()->GetClientClass(GetPlayer()->GetCID()) == Class::Hunter and !m_ShadowDimension) {
 
-        // reset velocity and current move
-        if(m_Ninja.m_CurrentMoveTime > 0)
-            m_Core.m_Vel = m_Ninja.m_ActivationDir*m_Ninja.m_OldVelAmount;
-        m_Ninja.m_CurrentMoveTime = -1;
+        } else{
+            // time's up, return
+            m_aWeapons[WEAPON_NINJA].m_Got = false;
+            m_ActiveWeapon = m_LastWeapon;
 
-        SetWeapon(m_ActiveWeapon);
+            // reset velocity and current move
+            if (m_Ninja.m_CurrentMoveTime > 0)
+                m_Core.m_Vel = m_Ninja.m_ActivationDir * m_Ninja.m_OldVelAmount;
+            m_Ninja.m_CurrentMoveTime = -1;
+
+            SetWeapon(m_ActiveWeapon);
+        }
         return;
     }
 
-    if (!m_pPlayer->m_Cheats.SuperNinja) {
-        // force ninja Weapon
-        SetWeapon(WEAPON_NINJA);
-    }
+    if (Server()->GetClientClass(GetPlayer()->GetCID()) != Class::Hunter) {
+        if (!m_pPlayer->m_Cheats.SuperNinja and Server()->GetClientClass(GetPlayer()->GetCID()) != Class::Hunter) {
+            // force ninja Weapon
+            SetWeapon(WEAPON_NINJA);
+        }
 
-    m_Ninja.m_CurrentMoveTime--;
+        m_Ninja.m_CurrentMoveTime--;
 
-    if(m_Ninja.m_CurrentMoveTime == 0)
-    {
-        // reset velocity
-        m_Core.m_Vel = m_Ninja.m_ActivationDir*m_Ninja.m_OldVelAmount;
-    }
-    else if(m_Ninja.m_CurrentMoveTime > 0)
-    {
-        // Set velocity
-        m_Core.m_Vel = m_Ninja.m_ActivationDir * g_pData->m_Weapons.m_Ninja.m_Velocity;
-        vec2 OldPos = m_Pos;
-        GameServer()->Collision(GetMapID())->MoveBox(&m_Core.m_Pos, &m_Core.m_Vel, vec2(GetProximityRadius(), GetProximityRadius()), 0.f);
-
-        // reset velocity so the client doesn't predict stuff
-        m_Core.m_Vel = vec2(0.f, 0.f);
-
-        // check if we hit anything along the way
-        const float Radius = GetProximityRadius() * 2.0f;
-        const vec2 Center = OldPos + (m_Pos - OldPos) * 0.5f;
-        CCharacter *aEnts[MAX_CLIENTS];
-        const int Num = GameWorld()->FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMapID());
-
-        for(int i = 0; i < Num; ++i)
+        if(m_Ninja.m_CurrentMoveTime == 0)
         {
-            if(aEnts[i] == this)
-                continue;
+            // reset velocity
+            m_Core.m_Vel = m_Ninja.m_ActivationDir*m_Ninja.m_OldVelAmount;
+        }
+        else if(m_Ninja.m_CurrentMoveTime > 0)
+        {
+            // Set velocity
+            m_Core.m_Vel = m_Ninja.m_ActivationDir * g_pData->m_Weapons.m_Ninja.m_Velocity;
+            vec2 OldPos = m_Pos;
+            GameServer()->Collision(GetMapID())->MoveBox(&m_Core.m_Pos, &m_Core.m_Vel, vec2(GetProximityRadius(), GetProximityRadius()), 0.f);
 
-            // make sure we haven't hit this object before
-            bool AlreadyHit = false;
-            for(int j = 0; j < m_NumObjectsHit; j++)
+            // reset velocity so the client doesn't predict stuff
+            m_Core.m_Vel = vec2(0.f, 0.f);
+
+            // check if we hit anything along the way
+            const float Radius = GetProximityRadius() * 2.0f;
+            const vec2 Center = OldPos + (m_Pos - OldPos) * 0.5f;
+            CCharacter *aEnts[MAX_CLIENTS];
+            const int Num = GameWorld()->FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER,GetMapID());
+
+            for(int i = 0; i < Num; ++i)
             {
-                if(m_apHitObjects[j] == aEnts[i])
+                if(aEnts[i] == this)
+                    continue;
+
+                // make sure we haven't hit this object before
+                bool AlreadyHit = false;
+                for(int j = 0; j < m_NumObjectsHit; j++)
                 {
-                    AlreadyHit = true;
-                    break;
+                    if(m_apHitObjects[j] == aEnts[i])
+                    {
+                        AlreadyHit = true;
+                        break;
+                    }
                 }
+                if(AlreadyHit)
+                    continue;
+
+                // check so we are sufficiently close
+                if(distance(aEnts[i]->m_Pos, m_Pos) > Radius)
+                    continue;
+
+                // Hit a player, give him damage and stuffs...
+                GameServer()->CreateSound(aEnts[i]->m_Pos, SOUND_NINJA_HIT, -1, GetMapID());
+                if(m_NumObjectsHit < MAX_PLAYERS)
+                    m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
+
+                // set his velocity to fast upward (for now)
+                aEnts[i]->TakeDamage(vec2(0, -10.0f), m_Ninja.m_ActivationDir*-1, g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
             }
-            if(AlreadyHit)
-                continue;
-
-            // check so we are sufficiently close
-            if(distance(aEnts[i]->m_Pos, m_Pos) > Radius)
-                continue;
-
-            // Hit a player, give him damage and stuffs...
-            GameServer()->CreateSound(aEnts[i]->m_Pos, SOUND_NINJA_HIT, -1, GetMapID());
-            if(m_NumObjectsHit < MAX_PLAYERS)
-                m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
-
-            // set his velocity to fast upward (for now)
-            aEnts[i]->TakeDamage(vec2(0, -10.0f), m_Ninja.m_ActivationDir*-1, g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
         }
     }
 }
@@ -211,7 +234,7 @@ void CCharacter::HandleNinja()
 void CCharacter::DoWeaponSwitch()
 {
     // make sure we can switch
-    if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || (m_aWeapons[WEAPON_NINJA].m_Got and !m_pPlayer->m_Cheats.SuperNinja))
+    if(m_ReloadTimer != 0 || m_QueuedWeapon == -1 || (m_aWeapons[WEAPON_NINJA].m_Got and !m_pPlayer->m_Cheats.SuperNinja and Server()->GetClientClass(GetPlayer()->GetCID()) != Class::Hunter))
         return;
 
     // switch Weapon
@@ -344,6 +367,10 @@ void CCharacter::FireWeapon()
 
                 if((pTarget == this) || GameServer()->Collision(GetMapID())->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
                     continue;
+
+                if (pTarget->m_ShadowDimension){
+                    pTarget->RevealHunter(true);
+                }
 
                 // set his velocity to fast upward (for now)
                 if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
@@ -507,7 +534,49 @@ void CCharacter::FireWeapon()
             m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
             m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
 
-            GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, -1, GetMapID());
+            if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Hunter){
+                m_Ninja.m_CurrentMoveTime = -1;
+                if (m_ShadowDimension) {
+                    RevealHunter(false);
+                } else {
+                    if ((m_ShadowDimensionCooldown and m_Ninja.m_ActivationTick>=Server()->Tick()) or !m_ShadowDimensionCooldown){
+                        bool too_close = false;
+                        bool hooked = false;
+                        for (int i = 0; i < MAX_PLAYERS; ++i) {
+                            if (i != GetPlayer()->GetCID()) {
+                                if (GameServer()->m_apPlayers[i]) {
+                                    if (GameServer()->m_apPlayers[i]->GetCharacter()) {
+                                        if (GameServer()->m_apPlayers[i]->GetTeam()!=m_pPlayer->GetTeam()) {
+                                            if (distance(GameServer()->m_apPlayers[i]->GetCharacter()->GetPos(), m_Pos) <=
+                                                400.f) {
+                                                too_close= true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (m_Core.m_HookState==HOOK_GRABBED) {
+                            if (m_Core.m_HookedPlayer){
+                                if (Server()->ClientIngame(m_Core.m_HookedPlayer)){
+                                    if (GameServer()->GetClientTeam(m_Core.m_HookedPlayer)!=m_pPlayer->GetTeam()){
+                                        hooked= true;
+                                    }
+                                }
+                            }
+                        }
+                        if (hooked or too_close) {
+                            GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                        } else {
+                            HideHunter();
+                        }
+                    } else {
+                        GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
+                    }
+                }
+            } else{
+                GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, -1, GetMapID());
+            }
         } break;
 
     }
@@ -688,6 +757,23 @@ void CCharacter::Teleport(vec2 where){
     Tick();
 }
 
+void CCharacter::RevealHunter(bool Cooldown){
+    if(!m_pPlayer->m_Cheats.Godmode) {
+        m_ShadowDimension = false;
+        m_ShadowDimensionCooldown = Cooldown;
+        GameServer()->CreateSound(m_Pos, SOUND_PICKUP_NINJA, -1, GetMapID());
+    }
+}
+
+void CCharacter::HideHunter(){
+    if(!m_pPlayer->m_Cheats.Godmode) {
+        m_ShadowDimension = true;
+        m_ShadowDimensionCooldown = false;
+        m_Ninja.m_ActivationTick = clamp(m_Ninja.m_ActivationTick, 0, Server()->Tick());
+        GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, -1, GetMapID());
+    }
+}
+
 void CCharacter::Tick()
 {
     if(m_Health<10 and m_pPlayer->m_Cheats.Godmode){
@@ -711,8 +797,13 @@ void CCharacter::Tick()
     if (m_pPlayer->m_Cheats.LockPosition){
         m_Core.LockPos(m_pPlayer->m_Cheats.LockPos);
     }
+
+    bool doReveal;
     m_Core.m_Input = m_Input;
-    m_Core.Tick(true, &m_pPlayer->m_Cheats);
+    m_Core.Tick(true, doReveal, &m_pPlayer->m_Cheats);
+    if (m_ShadowDimension and doReveal){
+        RevealHunter(true);
+    }
 
     // handle leaving gamelayer
     if(GameLayerClipped(m_Pos))
@@ -732,7 +823,7 @@ void CCharacter::TickDefered()
     // advance the dummy
     {
         CWorldCore TempWorld;
-        m_ReckoningCore.Init(&TempWorld, GameServer()->Collision(GetMapID()));
+        m_ReckoningCore.Init(&TempWorld, GameServer()->Collision(GetMapID()), m_pPlayer->GetTeam(), GetMapID(), Server()->GetClientClass(m_pPlayer->GetCID()));
         m_ReckoningCore.Tick(false);
         m_ReckoningCore.Move();
         m_ReckoningCore.Quantize();
@@ -1032,12 +1123,14 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
         return false;
     }
 
-    if (Dmg > 2)
-        GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, -1, GetMapID());
-    else
-        GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT, -1, GetMapID());
+    if (!Server()->GetClientSmile(m_pPlayer->GetCID())) {
+        if (Dmg > 2)
+            GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, -1, GetMapID());
+        else
+            GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT, -1, GetMapID());
 
-    SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
+        SetEmote(EMOTE_PAIN, Server()->Tick() + 500 * Server()->TickSpeed() / 1000);
+    }
 
     return true;
 }
@@ -1048,6 +1141,13 @@ void CCharacter::Snap(int SnappingClient)
         return;
     }
 
+    if(SnappingClient!=m_pPlayer->GetCID() and m_ShadowDimension and GameServer()->GetClientTeam(SnappingClient)!=GetPlayer()->GetTeam()){
+        if (GameServer()->GetPlayerChar(SnappingClient)) {
+            if (!GameServer()->GetPlayerChar(SnappingClient)->m_ShadowDimension) {
+                return;
+            }
+        }
+    }
     if(NetworkClipped(SnappingClient))
         return;
 

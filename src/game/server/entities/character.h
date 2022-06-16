@@ -58,6 +58,8 @@ public:
 	bool GiveWeapon(int Weapon, int Ammo);
     void GiveNinja();
     void LoseNinja();
+    void HideHunter();
+    void RevealHunter(bool Cooldown);
 
     void Teleport(vec2 where);
 
@@ -65,6 +67,9 @@ public:
 
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
+
+    bool m_ShadowDimension= false;
+    bool m_ShadowDimensionCooldown= false;
 
 	int m_Tank_PistolHitTick;
 	int m_Tank_PistolShot = 0;

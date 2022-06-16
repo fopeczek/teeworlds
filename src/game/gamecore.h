@@ -13,6 +13,7 @@
 #include <engine/shared/protocol.h>
 #include <generated/protocol.h>
 #include "game/server/player_classes.h"
+#include "engine/server.h"
 
 class CTuneParam
 {
@@ -156,6 +157,8 @@ public:
 
     Class m_Class;
 
+    bool m_Reveal= false;
+
 	vec2 m_HookDragVel;
 
 	vec2 m_HookPos;
@@ -163,6 +166,9 @@ public:
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;
+
+    int m_MapID;
+    int m_Team;
 
 	int m_Jumped;
 
@@ -175,9 +181,10 @@ public:
 
 	int m_TriggeredEvents;
 
-	void Init(CWorldCore *pWorld, CCollision *pCollision, Class player_Class=Class::None);
+	void Init(CWorldCore *pWorld, CCollision *pCollision, int Team, int MapID=IServer::MainMapID, Class player_Class=Class::None);
 	void Reset();
-	void Tick(bool UseInput, AvailableCheats *pCheats=nullptr);
+    void Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheats=nullptr);
+    void Tick(bool UseInput){ bool non; Tick(UseInput, non);}
 	void Move();
     void LockPos(vec2 Pos);
 

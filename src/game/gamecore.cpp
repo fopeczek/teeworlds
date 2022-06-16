@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "gamecore.h"
 #include "game/server/player_classes.h"
+#include "engine/server.h"
 
 const char *CTuningParams::s_apNames[] =
 {
@@ -67,10 +68,12 @@ float VelocityRamp(float Value, float Start, float Range, float Curvature)
 
 const float CCharacterCore::PHYS_SIZE = 28.0f;
 
-void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, Class player_Class)
+void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, int Team, int MapID, Class player_Class)
 {
 	m_pWorld = pWorld;
 	m_pCollision = pCollision;
+    m_Team=Team;
+    m_MapID = MapID;
     m_Class = player_Class;
 }
 
@@ -89,7 +92,7 @@ void CCharacterCore::Reset()
 	m_Death = false;
 }
 
-void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
+void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheats)
 {
 	m_TriggeredEvents = 0;
 
@@ -314,9 +317,12 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 		if(m_HookedPlayer != -1)
 		{
 			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[m_HookedPlayer];
-			if(pCharCore)
+			if(pCharCore){
 				m_HookPos = pCharCore->m_Pos;
-			else
+                if (pCharCore->m_Team!=m_Team and pCharCore->m_Class==Class::Hunter) {
+                    pCharCore->m_Reveal= true;
+                }
+            }else
 			{
 				// release hook
 				m_HookedPlayer = -1;
@@ -428,8 +434,13 @@ void CCharacterCore::Tick(bool UseInput, AvailableCheats *pCheats)
 	}
 
 	// clamp the velocity to something sane
-	if(length(m_Vel) > 6000)
-		m_Vel = normalize(m_Vel) * 6000;
+	if(length(m_Vel) > 6000) {
+        m_Vel = normalize(m_Vel) * 6000;
+    }
+    if (m_Reveal){
+        m_Reveal= false;
+        doReveal= true;
+    }
 }
 
 void CCharacterCore::AddDragVelocity()

@@ -818,9 +818,6 @@ void CWall::CheckForBullets() {
                                                                                       GameWorld()->ENTTYPE_PROJECTILE,
                                                                                       this,
                                                                                       GetMapID());
-
-                otherWalls[MAX_PLAYERS * pPlayer->m_Engineer_MaxActiveWalls +
-                           MAX_PLAYERS * pPlayer->m_Spider_MaxActiveWebs];
                 howMany = GameWorld()->FindEntities(m_From, m_laser_range, (CEntity **) otherWalls,
                                                     MAX_PLAYERS * pPlayer->m_Engineer_MaxActiveWalls +
                                                     MAX_PLAYERS * pPlayer->m_Spider_MaxActiveWebs,
