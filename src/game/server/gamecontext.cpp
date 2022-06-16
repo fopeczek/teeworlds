@@ -134,7 +134,7 @@ void CGameContext::CreateHammerHit(vec2 Pos, int MapID)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage, int MapID)
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage, float Force, vec2 Direction, int MapID)
 {
 	// create the event
 	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), -1, MapID);
@@ -152,14 +152,25 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, MapID);
 	for(int i = 0; i < Num; i++)
 	{
-		vec2 Diff = apEnts[i]->GetPos() - Pos;
-		vec2 Force(0, MaxForce);
-		float l = length(Diff);
-		if(l)
-			Force = normalize(Diff) * MaxForce;
-		float Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
-		if((int)(Factor * MaxDamage))
-			apEnts[i]->TakeDamage(Force * Factor, Diff*-1, (int)(Factor * MaxDamage), Owner, Weapon);
+        if (Force != 0.f){
+            vec2 Diff = apEnts[i]->GetPos() - Pos;
+            vec2 NForce(MaxForce, MaxForce);
+            float l = length(Diff);
+            if(l)
+                NForce = normalize(Diff) * MaxForce;
+            float Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
+            if((int)(Factor * MaxDamage))
+                apEnts[i]->TakeDamage(NForce * Force, Diff*-1, MaxDamage, Owner, Weapon);
+        } else {
+            vec2 Diff = apEnts[i]->GetPos() - Pos;
+            vec2 NForce(MaxForce, MaxForce);
+            float l = length(Diff);
+            if(l)
+                NForce = normalize(Diff) * MaxForce;
+            float Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
+            if((int)(Factor * MaxDamage))
+                apEnts[i]->TakeDamage(NForce * Factor, Diff*-1, (int)(Factor * MaxDamage), Owner, Weapon);
+        }
 	}
 }
 
