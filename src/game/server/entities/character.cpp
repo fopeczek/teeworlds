@@ -1135,6 +1135,32 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
     return true;
 }
 
+void CCharacter::ConRemoveAllWalls(){
+    CWall *allWalls[MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs + MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls];
+    int manyWalls = GameWorld()->FindEntities(GetPos(), 1000000000.f, (CEntity **) allWalls,
+                                              MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs + MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls, GameWorld()->ENTTYPE_LASER,
+                                              GetMapID());
+    if (manyWalls > 0) {
+        for (int i = 0; i < manyWalls; i++) {
+            if (allWalls[i]) {
+                if (allWalls[i]->pPlayer){
+                    if (allWalls[i]->pPlayer->GetCharacter()){
+                        allWalls[i]->pPlayer->GetCharacter()->m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID());
+                    }
+                }
+                if (allWalls[i]->m_Done or allWalls[i]->m_SpiderWeb) {
+                    allWalls[i]->Die(-2);
+                } else {
+                    if (allWalls[i]->pPlayer) {
+                        allWalls[i]->pPlayer->m_Engineer_Wall_Editing = false;
+                    }
+                    allWalls[i]->Destroy();
+                }
+            }
+        }
+    }
+}
+
 void CCharacter::Snap(int SnappingClient)
 {
     if (GameServer()->Server()->ClientMapID(SnappingClient) != GetMapID()) {

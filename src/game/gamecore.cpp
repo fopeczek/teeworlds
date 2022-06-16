@@ -413,7 +413,7 @@ void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheat
 			}
 
 			// handle hook influence
-			if(m_HookedPlayer == i && m_pWorld->m_Tuning.m_PlayerHooking)
+			if(m_HookedPlayer == i && m_pWorld->m_Tuning.m_PlayerHooking and m_MapID!=IServer::LobbyMapID)
 			{
 				if(Distance > PHYS_SIZE*1.50f) // TODO: fix tweakable variable
 				{

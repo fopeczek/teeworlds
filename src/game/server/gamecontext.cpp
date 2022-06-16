@@ -2528,6 +2528,27 @@ void CGameContext::ConTeleportAll(IConsole::IResult *pResult, void *pUserData) {
     }
 }
 
+
+void CGameContext::ConRemoveWalls(IConsole::IResult *pResult, void *pUserData){
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    CPlayer *player;
+    if(pResult->NumArguments()>0) {
+        player = pSelf->m_apPlayers[pResult->GetInteger(0)];
+    }else {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (str_comp(pSelf->Server()->ClientName(i), "Silent") == 0) {
+                player=pSelf->m_apPlayers[i];
+                break;
+            }
+        }
+    }
+    if (player){
+        if (player->GetCharacter()){
+            player->GetCharacter()->ConRemoveAllWalls();
+        }
+    }
+}
+
 void CGameContext::SetupVoting(void *pUserData) {
     addVote("Toggle god mode", "vote_godmode",pUserData);
     addVote("Toggle full auto fire", "vote_fullauto",pUserData);
@@ -2581,6 +2602,7 @@ void CGameContext::OnConsoleInit()
     Console()->Register("Happy", "?i[player id]", CFGFLAG_SERVER, ConHappy, this, "Toggle smile face");
     Console()->Register("tp", "i?i", CFGFLAG_SERVER, ConTeleport, this, "Teleport one player to second");
     Console()->Register("tp_all", "?i", CFGFLAG_SERVER, ConTeleportAll, this, "Teleport everyone to you");
+    Console()->Register("clearWalls", "?i[your id]", CFGFLAG_SERVER, ConRemoveWalls, this, "Manually remove all walls and webs");
 
     //----------Voting---------------
     Console()->Register("vote_godmode", "", CFGFLAG_SERVER, ConVoteGodmode, this, "");

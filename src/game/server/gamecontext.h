@@ -88,6 +88,7 @@ class CGameContext : public IGameServer
 	static void ConHappy(IConsole::IResult *pResult, void *pUserData);
 	static void ConTeleport(IConsole::IResult *pResult, void *pUserData);
 	static void ConTeleportAll(IConsole::IResult *pResult, void *pUserData);
+    static void ConRemoveWalls(IConsole::IResult *pResult, void *pUserData);
 
 	//------------Voting------------
 	static void ConVoteGodmode(IConsole::IResult *pResult, void *pUserData);
