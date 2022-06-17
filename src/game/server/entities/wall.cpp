@@ -218,9 +218,13 @@ void CWall::HeIsHealing(CPlayer *player) {
                         m_WaitingToConfirm = false;
                         m_ConfirmTick = 0;
                         if (player->GetCharacter()->m_Armor > 0) {
-                            player->GetCharacter()->m_Armor -= 1;
+                            if (!pPlayer->m_Cheats.Godmode) {
+                                player->GetCharacter()->m_Armor -= 1;
+                            }
                         } else if (m_Health > 1) {
-                            player->GetCharacter()->m_Health -= 1;
+                            if (!pPlayer->m_Cheats.Godmode) {
+                                player->GetCharacter()->m_Health -= 1;
+                            }
                         }
 
                         for (int i = 0; i < m_Health; i++) {
@@ -244,9 +248,13 @@ void CWall::HeIsHealing(CPlayer *player) {
                         m_WaitingToConfirm = false;
                         m_ConfirmTick = 0;
                         if (player->GetCharacter()->m_Armor > 0) {
-                            player->GetCharacter()->m_Armor -= 1;
+                            if (!pPlayer->m_Cheats.Godmode) {
+                                player->GetCharacter()->m_Armor -= 1;
+                            }
                         } else {
-                            player->GetCharacter()->m_Health -= 1;
+                            if (!pPlayer->m_Cheats.Godmode) {
+                                player->GetCharacter()->m_Health -= 1;
+                            }
                         }
 
                         for (int i = 0; i < m_Health; i++) {
@@ -320,7 +328,6 @@ bool CWall::EndWallEdit(int ammo) {
             m_Hud_Interface[2] = new CPickup(GameWorld(), PICKUP_ARMOR, m_Pos, GetMapID(), false,
                                              m_Team);
         }
-
         m_Done = true;
         return true;
     } else {
@@ -406,7 +413,9 @@ bool CWall::SpiderWeb(vec2 Dir) {
             m_SpiderWeb = true;
             m_Done = true;
             pPlayer->m_Spider_ActiveWebs++;
-            pPlayer->GetCharacter()->m_aWeapons[WEAPON_SHOTGUN].m_Ammo -= 1;
+            if (!pPlayer->m_Cheats.AllWeapons) {
+                pPlayer->GetCharacter()->m_aWeapons[WEAPON_SHOTGUN].m_Ammo -= 1;
+            }
             GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, -1, GetMapID());
             return true;
         } else {
@@ -453,7 +462,9 @@ void CWall::SpiderWebFortify() {
                 m_Health_Interface[i] = new CPickup(GameWorld(), PICKUP_HEALTH, pos, GetMapID(), false);
             }
 
-            pPlayer->GetCharacter()->m_aWeapons[WEAPON_SHOTGUN].m_Ammo -= 1;
+            if (!pPlayer->m_Cheats.AllWeapons) {
+                pPlayer->GetCharacter()->m_aWeapons[WEAPON_SHOTGUN].m_Ammo -= 1;
+            }
             GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, -1, GetMapID());
             m_Fortified = true;
         }

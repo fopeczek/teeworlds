@@ -503,7 +503,9 @@ void CCharacter::FireWeapon()
                         if (m_ActiveWall->EndWallEdit(amm)) {
                             m_pPlayer->m_Engineer_ActiveWalls++;
                             m_pPlayer->m_Engineer_Wall_Editing = false;
-                            m_aWeapons[m_ActiveWeapon].m_Ammo -= amm;
+                            if (!m_pPlayer->m_Cheats.AllWeapons) {
+                                m_aWeapons[m_ActiveWeapon].m_Ammo -= amm;
+                            }
                             m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID());
                         } else {
                             GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO, -1, GetMapID());
@@ -599,7 +601,7 @@ void CCharacter::FireWeapon()
         }
         if (Server()->GetClientClass(GetPlayer()->GetCID())== Class::Tank){
             if (m_ActiveWeapon == WEAPON_GUN){
-                if (m_Tank_PistolShot == 3){
+                if (m_Tank_PistolShot == 3 and !m_pPlayer->m_Cheats.AllWeapons){
                     m_aWeapons[m_ActiveWeapon].m_Ammo--;
                     m_Tank_PistolShot=0;
                 }
