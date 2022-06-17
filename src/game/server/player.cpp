@@ -502,7 +502,7 @@ void CPlayer::Become(Class who){
     switch (who) {
         case Class::None:
             Server()->SetClientClass(GetCID(), Class::None);
-            str_format(aBuf, sizeof(aBuf), "!it should not happen! player='%d:%s' class=none map='%d",
+            str_format(aBuf, sizeof(aBuf), "returned to lobby player='%d:%s' class=none map='%d",
                        m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
             GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
             break;
