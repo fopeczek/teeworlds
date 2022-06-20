@@ -68,9 +68,17 @@ bool CWall::HitCharacter() {
 
             m_LastHitTick = Server()->Tick();
         }
-
-        if (m_Owner!=-1){
-            //TODO create floating marker that shows direction where web was triggered
+        if (m_Owner!=-1 and pPlayer->GetCharacter()){
+            vec2 Dir(pHit->GetPos().x-pPlayer->GetCharacter()->GetPos().x, pHit->GetPos().y-pPlayer->GetCharacter()->GetPos().y);
+            const float R = length(Dir);
+            if (!m_Spider_Sense_Hud) {
+                m_Spider_Sense_Hud = new CPickup(GameWorld(), PICKUP_HEALTH,
+                                                 pPlayer->GetCharacter()->GetPos(),
+                                                 GetMapID(), false);
+            }
+            m_SpiderSenseTick=Server()->Tick();
+            m_SpiderSenseChar=pHit;
+            m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos()+Dir/R*100.f);
         }
     } else {
         vec2 At;
@@ -131,77 +139,6 @@ bool CWall::HitCharacter() {
         }
     }
     return true;
-}
-
-vec2 CWall::CheckForIntersection(vec2 st_pos1, vec2 st_pos2, vec2 sec_pos1, vec2 sec_pos2) {
-    float a1 = (st_pos1.y - st_pos2.y) / (st_pos1.x - st_pos2.x);
-    float b1 = st_pos1.y - a1 * st_pos1.x;
-
-    float a2 = (sec_pos1.y - sec_pos2.y) / (sec_pos1.x - sec_pos2.x);
-    float b2 = sec_pos1.y - a1 * sec_pos1.x;
-
-    float x = (b2 - b1) / (a1 - a2);
-    float y = a1 * x + b1;
-
-    vec2 res(x, y);
-
-    float st_right_pos;
-    float st_left_pos;
-    if (st_pos1.x > st_pos2.x) {
-        st_right_pos = st_pos1.x;
-        st_left_pos = st_pos2.x;
-    } else {
-        st_right_pos = st_pos2.x;
-        st_left_pos = st_pos1.x;
-    }
-
-    float st_up_pos;
-    float st_down_pos;
-    if (st_pos1.y > st_pos2.y) {
-        st_up_pos = st_pos1.y;
-        st_down_pos = st_pos2.y;
-    } else {
-        st_up_pos = st_pos2.y;
-        st_down_pos = st_pos1.y;
-    }
-
-    float sec_right_pos;
-    float sec_left_pos;
-    if (sec_pos1.x > sec_pos2.x) {
-        sec_right_pos = sec_pos1.x;
-        sec_left_pos = sec_pos2.x;
-    } else {
-        sec_right_pos = sec_pos2.x;
-        sec_left_pos = sec_pos1.x;
-    }
-
-    float sec_up_pos;
-    float sec_down_pos;
-    if (sec_pos1.y > sec_pos2.y) {
-        sec_up_pos = sec_pos1.y;
-        sec_down_pos = sec_pos2.y;
-    } else {
-        sec_up_pos = sec_pos2.y;
-        sec_down_pos = sec_pos1.y;
-    }
-
-    if (x <= st_right_pos and x >= st_left_pos) {
-        if (y <= st_up_pos and y >= st_down_pos) {
-            if (x <= sec_right_pos and x >= sec_left_pos) {
-                if (y <= sec_up_pos and y >= sec_down_pos) {
-                    return res;
-                } else {
-                    return vec2(0, 0);
-                }
-            } else {
-                return vec2(0, 0);
-            }
-        } else {
-            return vec2(0, 0);
-        }
-    } else {
-        return vec2(0, 0);
-    }
 }
 
 void CWall::HeIsHealing(CPlayer *player) {
@@ -523,6 +460,20 @@ bool CWall::TakeDamage(int Dmg, int From) {
                 }
             }
         }
+    }
+
+    if (m_Owner!=-1 and pPlayer->GetCharacter()){
+        CCharacter *pHit= GameServer()->GetPlayerChar(From);
+        vec2 Dir(pHit->GetPos().x-pPlayer->GetCharacter()->GetPos().x, pHit->GetPos().y-pPlayer->GetCharacter()->GetPos().y);
+        const float R = length(Dir);
+        if (!m_Spider_Sense_Hud) {
+            m_Spider_Sense_Hud = new CPickup(GameWorld(), PICKUP_HEALTH,
+                                             pPlayer->GetCharacter()->GetPos(),
+                                             GetMapID(), false);
+        }
+        m_SpiderSenseTick=Server()->Tick();
+        m_SpiderSenseChar=pHit;
+        m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos()+Dir/R*100.f);
     }
 
     if (m_Health <= 0) {
@@ -894,6 +845,11 @@ void CWall::Reset() {
             m_Hud_Interface[i] = nullptr;
         }
     }
+    //remove spider sense interface
+    if (m_Spider_Sense_Hud) {
+        m_Spider_Sense_Hud->Destroy();
+        m_Spider_Sense_Hud = nullptr;
+    }
     if (!m_SpiderWeb) {
         pPlayer->m_Engineer_ActiveWalls--;
         pPlayer->m_Engineer_ActiveWalls= clamp(pPlayer->m_Engineer_ActiveWalls, 0, pPlayer->m_Engineer_MaxActiveWalls);
@@ -970,17 +926,6 @@ void CWall::Tick() {
                     m_From = Clamp_vec(m_Pos, m_From, m_laser_range);
                     GameServer()->Collision(GetMapID())->IntersectLine(m_Pos, m_From, 0x0, &m_From);
 
-                    //                CWall* otherWalls[MAX_PLAYERS*pPlayer->m_Engineer_MaxActiveWalls + MAX_PLAYERS*pPlayer->m_Spider_MaxActiveWebs];
-                    //                int howMany = GameWorld()->FindEntities(m_Pos, m_laser_range*2, (CEntity **)otherWalls, MAX_PLAYERS*pPlayer->m_Engineer_MaxActiveWalls + MAX_PLAYERS*pPlayer->m_Spider_MaxActiveWebs, GameWorld()->ENTTYPE_LASER, GetMapID());
-                    //                if (howMany>0){
-                    //                    for(int i=0; i<howMany;++i){
-                    //                        vec2 intersection = CheckForIntersection(m_Pos, m_From, otherWalls[i]->m_Pos, otherWalls[i]->m_From); //Not working TODO fix CheckForIntersection
-                    //                        if (intersection!=vec2(0,0)){
-                    //                            m_From=intersection;
-                    //                        }
-                    //                    }
-                    //                }
-
                     GameServer()->CreateSound(m_From, SOUND_LASER_BOUNCE, -1,  GetMapID());
                 }
             } else {
@@ -1012,6 +957,19 @@ void CWall::Tick() {
         if (m_WaitingToConfirm) {
             if (m_ConfirmTick + (Server()->TickSpeed() * 5) < Server()->Tick()) {
                 m_WaitingToConfirm = false;
+            }
+        }
+        if(Server()->Tick()<m_SpiderSenseTick+500.f){
+            if (m_SpiderSenseChar and m_Spider_Sense_Hud and pPlayer->GetCharacter()) {
+                vec2 Dir(m_SpiderSenseChar->GetPos().x - pPlayer->GetCharacter()->GetPos().x,
+                         m_SpiderSenseChar->GetPos().y - pPlayer->GetCharacter()->GetPos().y);
+                const float R = length(Dir);
+                m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos() + Dir / R * 100.f);
+            }
+        } else {
+            if (m_Spider_Sense_Hud) {
+                m_Spider_Sense_Hud->Destroy();
+                m_Spider_Sense_Hud= nullptr;
             }
         }
     }

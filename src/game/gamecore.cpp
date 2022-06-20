@@ -271,7 +271,7 @@ void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheat
 		}
 
 		// Check against other players first
-		if(m_pWorld && m_pWorld->m_Tuning.m_PlayerHooking)
+		if(m_pWorld && m_pWorld->m_Tuning.m_PlayerHooking and m_MapID!=IServer::LobbyMapID)
 		{
 			float Distance = 0.0f;
 			for(int i = 0; i < MAX_CLIENTS; i++)
@@ -369,11 +369,13 @@ void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheat
 
 		// release hook (max hook time is 1.25
         if (pCheats){
-            if (!pCheats->SuperHook){
+            if (!pCheats->SuperHook and m_Class!=Class::Spider){
                 m_HookTick++;
             }
         } else {
-            m_HookTick++;
+            if (m_Class!=Class::Spider) {
+                m_HookTick++;
+            }
         }
 		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED+SERVER_TICK_SPEED/5 || !m_pWorld->m_apCharacters[m_HookedPlayer]))
 		{
@@ -413,7 +415,7 @@ void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheat
 			}
 
 			// handle hook influence
-			if(m_HookedPlayer == i && m_pWorld->m_Tuning.m_PlayerHooking and m_MapID!=IServer::LobbyMapID)
+			if(m_HookedPlayer == i && m_pWorld->m_Tuning.m_PlayerHooking)
 			{
 				if(Distance > PHYS_SIZE*1.50f) // TODO: fix tweakable variable
 				{
