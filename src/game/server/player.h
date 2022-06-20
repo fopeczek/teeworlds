@@ -47,10 +47,8 @@ public:
 
     bool m_Engineer_Wall_Editing= false;
     int m_Engineer_ActiveWalls= 0;
-    static constexpr int m_Engineer_MaxActiveWalls= 2*2;
 
     int m_Spider_ActiveWebs=0;
-    static constexpr int m_Spider_MaxActiveWebs=6*5;//shotgun shoots 5 walls every shot
 
     bool m_Tank_PistolHit= false;
 

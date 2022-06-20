@@ -69,16 +69,7 @@ bool CWall::HitCharacter() {
             m_LastHitTick = Server()->Tick();
         }
         if (m_Owner!=-1 and pPlayer->GetCharacter()){
-            vec2 Dir(pHit->GetPos().x-pPlayer->GetCharacter()->GetPos().x, pHit->GetPos().y-pPlayer->GetCharacter()->GetPos().y);
-            const float R = length(Dir);
-            if (!m_Spider_Sense_Hud) {
-                m_Spider_Sense_Hud = new CPickup(GameWorld(), PICKUP_HEALTH,
-                                                 pPlayer->GetCharacter()->GetPos(),
-                                                 GetMapID(), false);
-            }
-            m_SpiderSenseTick=Server()->Tick();
-            m_SpiderSenseChar=pHit;
-            m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos()+Dir/R*100.f);
+            pPlayer->GetCharacter()->AddSpiderSenseHud(pHit);
         }
     } else {
         vec2 At;
@@ -288,9 +279,9 @@ void CWall::StartWallEdit(vec2 Dir) {
 
 bool CWall::FirstTryToFortify(vec2 Dir, int CID) {
     bool b = false;
-    CWall *spiderWebs[MAX_PLAYERS * GameServer()->m_apPlayers[CID]->m_Spider_MaxActiveWebs];
+    CWall *spiderWebs[MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS];
     int manyWebs = GameWorld()->FindEntities(GameServer()->m_apPlayers[CID]->GetCharacter()->GetPos(), m_laser_range, (CEntity **) spiderWebs,
-                                             MAX_PLAYERS * GameServer()->m_apPlayers[CID]->m_Spider_MaxActiveWebs, GameWorld()->ENTTYPE_LASER,
+                                             MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS, GameWorld()->ENTTYPE_LASER,
                                              GetMapID());
     if (manyWebs > 0) {
         for (int i = 0; i < manyWebs; i++) {
@@ -463,17 +454,10 @@ bool CWall::TakeDamage(int Dmg, int From) {
     }
 
     if (m_Owner!=-1 and pPlayer->GetCharacter()){
-        CCharacter *pHit= GameServer()->GetPlayerChar(From);
-        vec2 Dir(pHit->GetPos().x-pPlayer->GetCharacter()->GetPos().x, pHit->GetPos().y-pPlayer->GetCharacter()->GetPos().y);
-        const float R = length(Dir);
-        if (!m_Spider_Sense_Hud) {
-            m_Spider_Sense_Hud = new CPickup(GameWorld(), PICKUP_HEALTH,
-                                             pPlayer->GetCharacter()->GetPos(),
-                                             GetMapID(), false);
+        CCharacter *pChar= GameServer()->GetPlayerChar(From);
+        if (pChar) {
+            pPlayer->GetCharacter()->AddSpiderSenseHud(pChar);
         }
-        m_SpiderSenseTick=Server()->Tick();
-        m_SpiderSenseChar=pHit;
-        m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos()+Dir/R*100.f);
     }
 
     if (m_Health <= 0) {
@@ -743,11 +727,11 @@ void CWall::CheckForBullets() {
                                                                                      GetMapID());
 
                 CWall *otherWalls[
-                        MAX_PLAYERS * pPlayer->m_Engineer_MaxActiveWalls +
-                        MAX_PLAYERS * pPlayer->m_Spider_MaxActiveWebs];
+                        MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS +
+                        MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS];
                 int howMany = GameWorld()->FindEntities(m_Pos, m_laser_range, (CEntity **) otherWalls,
-                                                        MAX_PLAYERS * pPlayer->m_Engineer_MaxActiveWalls +
-                                                        MAX_PLAYERS * pPlayer->m_Spider_MaxActiveWebs,
+                                                        MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS +
+                                                        MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS,
                                                         GameWorld()->ENTTYPE_LASER, GetMapID());
                 if (pPosBullet) {
                     if (pPosBullet->GetOwner() == m_Owner and pPosBullet->GetWeapon() == WEAPON_GUN) {
@@ -781,8 +765,8 @@ void CWall::CheckForBullets() {
                                                                                       this,
                                                                                       GetMapID());
                 howMany = GameWorld()->FindEntities(m_From, m_laser_range, (CEntity **) otherWalls,
-                                                    MAX_PLAYERS * pPlayer->m_Engineer_MaxActiveWalls +
-                                                    MAX_PLAYERS * pPlayer->m_Spider_MaxActiveWebs,
+                                                    MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS +
+                                                    MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS,
                                                     GameWorld()->ENTTYPE_LASER,
                                                     GetMapID());
                 if (pFromBullet) {
@@ -845,14 +829,9 @@ void CWall::Reset() {
             m_Hud_Interface[i] = nullptr;
         }
     }
-    //remove spider sense interface
-    if (m_Spider_Sense_Hud) {
-        m_Spider_Sense_Hud->Destroy();
-        m_Spider_Sense_Hud = nullptr;
-    }
     if (!m_SpiderWeb) {
         pPlayer->m_Engineer_ActiveWalls--;
-        pPlayer->m_Engineer_ActiveWalls= clamp(pPlayer->m_Engineer_ActiveWalls, 0, pPlayer->m_Engineer_MaxActiveWalls);
+        pPlayer->m_Engineer_ActiveWalls= clamp(pPlayer->m_Engineer_ActiveWalls, 0, MAX_ACTIVE_ENGINEER_WALLS);
     } else {
         pPlayer->m_Spider_ActiveWebs--;
         pPlayer->m_Spider_ActiveWebs= clamp(pPlayer->m_Spider_ActiveWebs, 0, pPlayer->m_Spider_ActiveWebs);
@@ -957,19 +936,6 @@ void CWall::Tick() {
         if (m_WaitingToConfirm) {
             if (m_ConfirmTick + (Server()->TickSpeed() * 5) < Server()->Tick()) {
                 m_WaitingToConfirm = false;
-            }
-        }
-        if(Server()->Tick()<m_SpiderSenseTick+500.f){
-            if (m_SpiderSenseChar and m_Spider_Sense_Hud and pPlayer->GetCharacter()) {
-                vec2 Dir(m_SpiderSenseChar->GetPos().x - pPlayer->GetCharacter()->GetPos().x,
-                         m_SpiderSenseChar->GetPos().y - pPlayer->GetCharacter()->GetPos().y);
-                const float R = length(Dir);
-                m_Spider_Sense_Hud->SetPos(pPlayer->GetCharacter()->GetPos() + Dir / R * 100.f);
-            }
-        } else {
-            if (m_Spider_Sense_Hud) {
-                m_Spider_Sense_Hud->Destroy();
-                m_Spider_Sense_Hud= nullptr;
             }
         }
     }

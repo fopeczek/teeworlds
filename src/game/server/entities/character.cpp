@@ -343,10 +343,10 @@ void CCharacter::FireWeapon()
         {
             GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, -1, GetMapID());
 
-            CWall *apWalls[MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls+MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs];
+            CWall *apWalls[MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS+MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS];
             int manyWalls = GameWorld()->FindEntities(ProjStartPos, 10000000000.f,
                                                       (CEntity **) apWalls,
-                                                      MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls+MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs,
+                                                      MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS+MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS,
                                                       CGameWorld::ENTTYPE_LASER, GetMapID());
 
             for (int i = 0; i < manyWalls; ++i) {
@@ -417,7 +417,7 @@ void CCharacter::FireWeapon()
 
                 if (Server()->GetClientClass(m_pPlayer->GetCID()) == Class::Spider) {
                     if (!m_ActiveWall->FirstTryToFortify(Direction, m_pPlayer->GetCID())) {
-                        if (m_pPlayer->m_Spider_ActiveWebs < m_pPlayer->m_Spider_MaxActiveWebs or
+                        if (m_pPlayer->m_Spider_ActiveWebs < MAX_ACTIVE_SPIDER_WEBS or
                             m_pPlayer->m_Cheats.Godmode) {
                             if (m_ActiveWall->SpiderWeb(Direction)) {
                                 m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID(), true);
@@ -431,7 +431,7 @@ void CCharacter::FireWeapon()
                                     float Speed = mix((float) GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
 
                                     if (i != -2) {
-                                        if (m_pPlayer->m_Spider_ActiveWebs < m_pPlayer->m_Spider_MaxActiveWebs or
+                                        if (m_pPlayer->m_Spider_ActiveWebs < MAX_ACTIVE_SPIDER_WEBS or
                                             m_pPlayer->m_Cheats.Godmode) {
                                             if (m_ActiveWall->SpiderWeb(vec2(cosf(a), sinf(a)) * Speed)) {
                                                 m_ActiveWall = new CWall(GameWorld(), m_pPlayer->GetCID(), GetMapID(),
@@ -492,7 +492,7 @@ void CCharacter::FireWeapon()
         case WEAPON_LASER:
         {
             if (Server()->GetClientClass(GetPlayer()->GetCID())==Class::Engineer) {
-                if(m_pPlayer->m_Engineer_ActiveWalls < m_pPlayer->m_Engineer_MaxActiveWalls or m_pPlayer->m_Cheats.Godmode){
+                if(m_pPlayer->m_Engineer_ActiveWalls < MAX_ACTIVE_ENGINEER_WALLS or m_pPlayer->m_Cheats.Godmode){
                     if (m_pPlayer->m_Engineer_Wall_Editing) {
                         int amm=m_aWeapons[m_ActiveWeapon].m_Ammo;
                         if (m_aWeapons[m_ActiveWeapon].m_Ammo>4) {
@@ -776,6 +776,48 @@ void CCharacter::HideHunter(){
     }
 }
 
+void CCharacter::AddSpiderSenseHud(CCharacter *pChar){
+    vec2 Dir(pChar->GetPos().x-m_Pos.x, pChar->GetPos().y-m_Pos.y);
+    const float R = length(Dir);
+    for (int i=0; i<MAX_ACTIVE_SPIDER_WEBS/5; i++){
+        if (!m_SpiderSenseHud[i] or m_SpiderSenseChar[i] == pChar) {
+            if (!m_SpiderSenseHud[i]) {
+                m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
+                                                  m_Pos,
+                                                  GetMapID(), false);
+            }
+            m_SpiderSenseTick[i]=Server()->Tick();
+            m_SpiderSenseChar[i]=pChar;
+            m_SpiderSenseHud[i]->SetPos(m_Pos+Dir/R*100.f);
+        }
+    }
+}
+
+void CCharacter::UpdateSpiderSenseHud() {
+    for (int i=0; i<MAX_ACTIVE_SPIDER_WEBS/5; i++) {
+        if (m_SpiderSenseHud[i]) {
+            if (Server()->Tick() < m_SpiderSenseTick[i] + 500.f) {
+                if (m_SpiderSenseChar[i]) {
+                    vec2 Dir(m_SpiderSenseChar[i]->GetPos().x - m_Pos.x,
+                             m_SpiderSenseChar[i]->GetPos().y - m_Pos.y);
+                    const float R = length(Dir);
+                    m_SpiderSenseHud[i]->SetPos(m_Pos + Dir / R * 100.f);
+                } else {
+                    if (m_SpiderSenseHud[i]) {
+                        m_SpiderSenseHud[i]->Destroy();
+                        m_SpiderSenseHud[i] = nullptr;
+                    }
+                }
+            } else {
+                if (m_SpiderSenseHud[i]) {
+                    m_SpiderSenseHud[i]->Destroy();
+                    m_SpiderSenseHud[i] = nullptr;
+                }
+            }
+        }
+    }
+}
+
 void CCharacter::Tick()
 {
     if(m_Health<10 and m_pPlayer->m_Cheats.Godmode){
@@ -805,6 +847,10 @@ void CCharacter::Tick()
     m_Core.Tick(true, doReveal, &m_pPlayer->m_Cheats);
     if (m_ShadowDimension and doReveal){
         RevealHunter(true);
+    }
+
+    if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Spider) {
+        UpdateSpiderSenseHud();
     }
 
     // handle leaving gamelayer
@@ -986,6 +1032,17 @@ void CCharacter::Die(int Killer, int Weapon)
         // this is for auto respawn after 3 secs
         m_pPlayer->m_DieTick = Server()->Tick();
 
+        //remove spider sense interface
+        for (int i =0; i<MAX_ACTIVE_SPIDER_WEBS/5;i++) {
+            if (m_SpiderSenseChar[i]){
+                m_SpiderSenseChar[i] = nullptr;
+            }
+            if (m_SpiderSenseHud[i]) {
+                m_SpiderSenseHud[i]->Destroy();
+                m_SpiderSenseHud[i] = nullptr;
+            }
+        }
+
         GameWorld()->RemoveEntity(this);
         GameWorld()->m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
         GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), GetMapID());
@@ -1138,9 +1195,9 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 }
 
 void CCharacter::ConRemoveAllWalls(){
-    CWall *allWalls[MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs + MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls];
+    CWall *allWalls[MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS + MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS];
     int manyWalls = GameWorld()->FindEntities(GetPos(), 1000000000.f, (CEntity **) allWalls,
-                                              MAX_PLAYERS * m_pPlayer->m_Spider_MaxActiveWebs + MAX_PLAYERS * m_pPlayer->m_Engineer_MaxActiveWalls, GameWorld()->ENTTYPE_LASER,
+                                              MAX_PLAYERS * MAX_ACTIVE_SPIDER_WEBS + MAX_PLAYERS * MAX_ACTIVE_ENGINEER_WALLS, GameWorld()->ENTTYPE_LASER,
                                               GetMapID());
     if (manyWalls > 0) {
         for (int i = 0; i < manyWalls; i++) {

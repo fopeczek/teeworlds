@@ -7,6 +7,7 @@
 
 #include <game/gamecore.h>
 #include <game/server/entity.h>
+#include "pickup.h"
 
 
 class CCharacter : public CEntity
@@ -65,6 +66,8 @@ public:
 
 	void SetEmote(int Emote, int Tick);
 
+    void AddSpiderSenseHud(CCharacter *pChar);
+
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
@@ -95,6 +98,12 @@ public:
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
+
+    CCharacter *m_SpiderSenseChar[MAX_ACTIVE_SPIDER_WEBS/5];
+    CPickup *m_SpiderSenseHud[MAX_ACTIVE_SPIDER_WEBS / 5];
+    int m_SpiderSenseTick[MAX_ACTIVE_SPIDER_WEBS/5];
+
+    void UpdateSpiderSenseHud();
 
 	bool m_Alive;
 

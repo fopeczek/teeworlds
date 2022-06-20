@@ -75,9 +75,6 @@ private:
 
     CPickup *m_Health_Interface[m_MAX_Health];
     CPickup *m_Hud_Interface[3];
-    CPickup *m_Spider_Sense_Hud;
-    CCharacter *m_SpiderSenseChar;
-    int m_SpiderSenseTick;
 
     //-----------------------for calculations-------------------------------
     static constexpr float radius = 50.f;
