@@ -898,6 +898,9 @@ set(EXPECTED_DATA
   fonts/SourceHanSans.ttc
   fonts/index.json
   game.png
+  github/Lobby.png
+  github/Lobby&weapons.png
+  github/server.png
   languages/belarusian.json
   languages/bosnian.json
   languages/brazilian_portuguese.json
