@@ -989,6 +989,7 @@ set(EXPECTED_DATA
   maps/dm9.map
   maps/license.txt
   maps/lms1.map
+  maps/lobby.map
   maps/readme.txt
   particles.png
   race_flag.png
