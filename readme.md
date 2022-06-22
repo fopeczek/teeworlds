@@ -27,13 +27,13 @@ Every weapon represents a different class available in my server.
 ![This is lobby](/datasrc/github/Lobby&weapons.png "This is lobby")
 
 Here you can find all info about each class: [ 
-[Engineer](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-engineer-) | 
-[Spider](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-spider-) | 
-[Scout](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-scout-) | 
-[Tank](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-tank-) | 
-[Hunter](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-hunter-) | 
-[Medic](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-medic-) | 
-[Armorer](https://github.com/fopeczek/teamworlds/edit/main/readme.md#-armorer-)
+[Engineer](https://github.com/fopeczek/teeworlds#-engineer-) | 
+[Spider](https://github.com/fopeczek/teeworlds#-spider-) | 
+[Scout](https://github.com/fopeczek/teeworlds#-scout-) | 
+[Tank](https://github.com/fopeczek/teeworlds#-tank-) | 
+[Hunter](https://github.com/fopeczek/teeworlds#-hunter-) | 
+[Medic](https://github.com/fopeczek/teeworlds#-medic-) | 
+[Armorer](https://github.com/fopeczek/teeworlds#-armorer-)
  ]
 
 ----------
