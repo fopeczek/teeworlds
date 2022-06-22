@@ -777,18 +777,20 @@ void CCharacter::HideHunter(){
 }
 
 void CCharacter::AddSpiderSenseHud(CCharacter *pChar){
-    vec2 Dir(pChar->GetPos().x-m_Pos.x, pChar->GetPos().y-m_Pos.y);
-    const float R = length(Dir);
-    for (int i=0; i<MAX_ACTIVE_SPIDER_WEBS/5; i++){
-        if (!m_SpiderSenseHud[i] or m_SpiderSenseChar[i] == pChar) {
-            if (!m_SpiderSenseHud[i]) {
-                m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
-                                                  m_Pos,
-                                                  GetMapID(), false);
+    if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Spider) {
+        vec2 Dir(pChar->GetPos().x - m_Pos.x, pChar->GetPos().y - m_Pos.y);
+        const float R = length(Dir);
+        for (int i = 0; i < MAX_ACTIVE_SPIDER_WEBS / 5; i++) {
+            if (!m_SpiderSenseHud[i] or m_SpiderSenseChar[i] == pChar) {
+                if (!m_SpiderSenseHud[i]) {
+                    m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
+                                                      m_Pos,
+                                                      GetMapID(), false);
+                }
+                m_SpiderSenseTick[i] = Server()->Tick();
+                m_SpiderSenseChar[i] = pChar;
+                m_SpiderSenseHud[i]->SetPos(m_Pos + Dir / R * 100.f);
             }
-            m_SpiderSenseTick[i]=Server()->Tick();
-            m_SpiderSenseChar[i]=pChar;
-            m_SpiderSenseHud[i]->SetPos(m_Pos+Dir/R*100.f);
         }
     }
 }
