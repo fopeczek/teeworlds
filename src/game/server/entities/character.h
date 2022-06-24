@@ -99,9 +99,9 @@ private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
 
-    CCharacter *m_SpiderSenseChar[MAX_ACTIVE_SPIDER_WEBS/5];
-    CPickup *m_SpiderSenseHud[MAX_ACTIVE_SPIDER_WEBS / 5];
-    int m_SpiderSenseTick[MAX_ACTIVE_SPIDER_WEBS/5];
+    int m_SpiderSenseCID[MAX_PLAYERS];
+    CPickup *m_SpiderSenseHud[MAX_PLAYERS];
+    int m_SpiderSenseTick[MAX_PLAYERS];
 
     void UpdateSpiderSenseHud();
 

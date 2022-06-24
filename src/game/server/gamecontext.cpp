@@ -745,14 +745,15 @@ void CGameContext::KillCharacter(int ClientID)
 
 void CGameContext::OnClientConnected(int ClientID, bool Dummy, bool AsSpec)
 {
+    int ret=-3;
     if(m_apPlayers[ClientID])
     {
         //dbg_assert(m_apPlayers[ClientID]->IsDummy(), "invalid clientID");
-        OnClientDrop(ClientID, "removing dummy");
+        ret = OnClientDrop(ClientID, "removing dummy");
     }
 
     //if(!m_apPlayers[ClientID])
-    m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, Dummy, AsSpec);
+    m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, Dummy, AsSpec, ret);
 
     if(Dummy)
         return;
@@ -782,7 +783,7 @@ void CGameContext::OnClientTeamChange(int ClientID)
 	}
 }
 
-void CGameContext::OnClientDrop(int ClientID, const char *pReason)
+int CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
 	AbortVoteOnDisconnect(ClientID);
 	m_pController->OnPlayerDisconnect(m_apPlayers[ClientID]);
@@ -815,10 +816,18 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 			p->LoseOwner();
 	}
 
+    int Team = -3;
+    if (m_apPlayers[ClientID]->m_MapChange){
+        Team = m_apPlayers[ClientID]->m_Team;
+    }
 	delete m_apPlayers[ClientID];
 	m_apPlayers[ClientID] = 0;
 
 	m_VoteUpdate = true;
+    if (Team != -3){
+        return Team;
+    }
+    return -3;
 }
 
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)

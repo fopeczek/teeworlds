@@ -87,6 +87,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
         m_ActiveWall = new CWall (GameWorld(), m_pPlayer->GetCID(), Server()->MainMapID);
     }
 
+    for (int i=0; i<MAX_PLAYERS;i++){
+        m_SpiderSenseHud[i]= nullptr;
+        m_SpiderSenseCID[i]=-1;
+    }
+
     return true;
 }
 
@@ -615,6 +620,9 @@ void CCharacter::FireWeapon()
 
     if(!m_ReloadTimer) {
         m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000;
+        if (Server()->GetClientClass(GetPlayer()->GetCID())== Class::Tank and m_ActiveWeapon == WEAPON_GUN){
+            m_ReloadTimer = g_pData->m_Weapons.m_aId[m_ActiveWeapon].m_Firedelay * Server()->TickSpeed() / 1000 - 2;
+        }
         if (m_pPlayer->m_Cheats.SuperNinja and m_ActiveWeapon == WEAPON_NINJA) {
             m_ReloadTimer = 300.f * Server()->TickSpeed() / 1000;
         }
@@ -780,40 +788,45 @@ void CCharacter::AddSpiderSenseHud(CCharacter *pChar){
     if (Server()->GetClientClass(m_pPlayer->GetCID())==Class::Spider) {
         vec2 Dir(pChar->GetPos().x - m_Pos.x, pChar->GetPos().y - m_Pos.y);
         const float R = length(Dir);
-        for (int i = 0; i < MAX_ACTIVE_SPIDER_WEBS / 5; i++) {
-            if (!m_SpiderSenseHud[i] or m_SpiderSenseChar[i] == pChar) {
-                if (!m_SpiderSenseHud[i]) {
-                    m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
-                                                      m_Pos,
-                                                      GetMapID(), false);
-                }
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (m_SpiderSenseCID[i] == pChar->m_pPlayer->GetCID()){
+                return;
+            }
+            if (!m_SpiderSenseHud[i]) {
+                m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
+                                                  m_Pos + Dir / R * 100.f,
+                                                  GetMapID(), false);
                 m_SpiderSenseTick[i] = Server()->Tick();
-                m_SpiderSenseChar[i] = pChar;
-                m_SpiderSenseHud[i]->SetPos(m_Pos + Dir / R * 100.f);
+                m_SpiderSenseCID[i] = pChar->m_pPlayer->GetCID();
+                return;
             }
         }
     }
 }
 
 void CCharacter::UpdateSpiderSenseHud() {
-    for (int i=0; i<MAX_ACTIVE_SPIDER_WEBS/5; i++) {
+    for (int i=0; i<MAX_PLAYERS; i++) {
         if (m_SpiderSenseHud[i]) {
             if (Server()->Tick() < m_SpiderSenseTick[i] + 500.f) {
-                if (m_SpiderSenseChar[i]) {
-                    vec2 Dir(m_SpiderSenseChar[i]->GetPos().x - m_Pos.x,
-                             m_SpiderSenseChar[i]->GetPos().y - m_Pos.y);
+                if (GameServer()->GetPlayerChar(m_SpiderSenseCID[i])) {
+                    vec2 Dir(GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().x - m_Pos.x,
+                             GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().y - m_Pos.y);
                     const float R = length(Dir);
                     m_SpiderSenseHud[i]->SetPos(m_Pos + Dir / R * 100.f);
                 } else {
                     if (m_SpiderSenseHud[i]) {
                         m_SpiderSenseHud[i]->Destroy();
                         m_SpiderSenseHud[i] = nullptr;
+                        m_SpiderSenseCID[i] = -1;
+                        m_SpiderSenseTick[i]=0;
                     }
                 }
             } else {
                 if (m_SpiderSenseHud[i]) {
                     m_SpiderSenseHud[i]->Destroy();
                     m_SpiderSenseHud[i] = nullptr;
+                    m_SpiderSenseCID[i] = -1;
+                    m_SpiderSenseTick[i]=0;
                 }
             }
         }
@@ -1035,13 +1048,12 @@ void CCharacter::Die(int Killer, int Weapon)
         m_pPlayer->m_DieTick = Server()->Tick();
 
         //remove spider sense interface
-        for (int i =0; i<MAX_ACTIVE_SPIDER_WEBS/5;i++) {
-            if (m_SpiderSenseChar[i]){
-                m_SpiderSenseChar[i] = nullptr;
-            }
+        for (int i =0; i<MAX_PLAYERS;i++) {
             if (m_SpiderSenseHud[i]) {
                 m_SpiderSenseHud[i]->Destroy();
                 m_SpiderSenseHud[i] = nullptr;
+                m_SpiderSenseCID[i] = -1;
+                m_SpiderSenseTick[i] = 0;
             }
         }
 
