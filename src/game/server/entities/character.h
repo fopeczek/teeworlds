@@ -99,6 +99,7 @@ private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
 
+    const float m_SpiderSenseHudDistanceFactor=20.f;
     int m_SpiderSenseCID[MAX_PLAYERS];
     CPickup *m_SpiderSenseHud[MAX_PLAYERS];
     int m_SpiderSenseTick[MAX_PLAYERS];
