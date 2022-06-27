@@ -18,4 +18,4 @@ enum class Class {
 
 static constexpr int MAX_ACTIVE_SPIDER_WEBS=6*5;//shotgun shoots 5 walls every shot
 static constexpr int MAX_ACTIVE_ENGINEER_WALLS= 2*2;
-static constexpr int MIN_SPIDER_SENSE_DISTANCE= 200;
+static constexpr int MIN_SPIDER_SENSE_DISTANCE= 400;

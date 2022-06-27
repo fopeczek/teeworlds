@@ -833,11 +833,13 @@ void CCharacter::UpdateSpiderSenseHud() {
                     }
                 }
             } else {
-                if (m_SpiderSenseHud[i]) {
-                    m_SpiderSenseHud[i]->Destroy();
-                    m_SpiderSenseHud[i] = nullptr;
-                    m_SpiderSenseCID[i] = -1;
-                    m_SpiderSenseTick[i]=0;
+                if (!m_pPlayer->m_Cheats.Godmode) {
+                    if (m_SpiderSenseHud[i]) {
+                        m_SpiderSenseHud[i]->Destroy();
+                        m_SpiderSenseHud[i] = nullptr;
+                        m_SpiderSenseCID[i] = -1;
+                        m_SpiderSenseTick[i] = 0;
+                    }
                 }
             }
         }
