@@ -795,7 +795,7 @@ void CCharacter::AddSpiderSenseHud(CCharacter *pChar){
             if (!m_SpiderSenseHud[i]) {
                 m_SpiderSenseHud[i] = new CPickup(GameWorld(), PICKUP_HEALTH,
                                                   m_Pos + Dir / R * 100.f,
-                                                  GetMapID(), false);
+                                                  GetMapID(), false, m_pPlayer->m_Team);
                 m_SpiderSenseTick[i] = Server()->Tick();
                 m_SpiderSenseCID[i] = pChar->m_pPlayer->GetCID();
                 return;
@@ -809,12 +809,21 @@ void CCharacter::UpdateSpiderSenseHud() {
         if (m_SpiderSenseHud[i]) {
             if (Server()->Tick() < m_SpiderSenseTick[i] + 500.f) {
                 if (GameServer()->GetPlayerChar(m_SpiderSenseCID[i])) {
-                    vec2 Direction(GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().x - m_Pos.x,
-                             GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().y - m_Pos.y);
-                    const float Distance = length(Direction);
-                    const float Factor = Distance / m_SpiderSenseHudDistanceFactor;
-                    vec2 Offset(Direction.x/Distance*Factor, Direction.y/Distance*Factor);
-                    m_SpiderSenseHud[i]->SetPos(m_Pos + Offset);
+                    if (distance(m_SpiderSenseHud[i]->GetPos(), GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos()) > MIN_SPIDER_SENSE_DISTANCE) {
+                        vec2 Direction(GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().x - m_Pos.x,
+                                       GameServer()->GetPlayerChar(m_SpiderSenseCID[i])->GetPos().y - m_Pos.y);
+                        const float Distance = length(Direction);
+                        const float Factor = Distance / m_SpiderSenseHudDistanceFactor;
+                        vec2 Offset(Direction.x / Distance * Factor, Direction.y / Distance * Factor);
+                        m_SpiderSenseHud[i]->SetPos(m_Pos + Offset);
+                    } else {
+                        if (m_SpiderSenseHud[i]) {
+                            m_SpiderSenseHud[i]->Destroy();
+                            m_SpiderSenseHud[i] = nullptr;
+                            m_SpiderSenseCID[i] = -1;
+                            m_SpiderSenseTick[i]=0;
+                        }
+                    }
                 } else {
                     if (m_SpiderSenseHud[i]) {
                         m_SpiderSenseHud[i]->Destroy();
