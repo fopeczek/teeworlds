@@ -319,7 +319,7 @@ void CCharacterCore::Tick(bool UseInput, bool &doReveal, AvailableCheats *pCheat
 			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[m_HookedPlayer];
 			if(pCharCore){
 				m_HookPos = pCharCore->m_Pos;
-                if (pCharCore->m_Team!=m_Team and pCharCore->m_Class==Class::Hunter) {
+                if (pCharCore->m_Team!=m_Team and m_Team!=-1 and pCharCore->m_Class==Class::Hunter) {
                     pCharCore->m_Reveal= true;
                 }
             }else

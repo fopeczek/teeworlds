@@ -1553,7 +1553,7 @@ if(CLIENT)
       set(CLIENT_MANIFEST "other/manifest/teeworlds.rc")
     endif()
   else()
-    set(CLIENT_ICON)
+    set(CLIENT_ICON src/game/server/player_classes.cpp)
   endif()
 
   # Target
@@ -1648,13 +1648,14 @@ set_src(GAME_SERVER GLOB_RECURSE src/game/server
   gameworld_fwd.h
   player.cpp
   player.h
+  player_classes.cpp
   player_classes.h
 )
 set(GAME_GENERATED_SERVER
   src/generated/server_data.cpp
   src/generated/server_data.h
 )
-set(SERVER_SRC ${ENGINE_SERVER} ${GAME_SERVER} ${GAME_GENERATED_SERVER} src/game/CheatList.h)
+set(SERVER_SRC ${ENGINE_SERVER} ${GAME_SERVER} ${GAME_GENERATED_SERVER} src/game/CheatList.h src/game/server/player_classes.cpp)
 if(TARGET_OS STREQUAL "windows")
   set(SERVER_ICON "other/icons/${SERVER_EXECUTABLE}.rc")
 else()

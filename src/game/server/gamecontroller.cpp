@@ -1236,7 +1236,7 @@ void IGameController::Com_reset_class(IConsole::IResult *pResult, void *pContext
     NewClientInfoMsg.m_pName = pSelf->Server()->ClientName(pComContext->m_ClientID);
     NewClientInfoMsg.m_pClan = pSelf->Server()->ClientClan(pComContext->m_ClientID);
     NewClientInfoMsg.m_Country = pSelf->Server()->ClientCountry(pComContext->m_ClientID);
-    NewClientInfoMsg.m_ClassID = 0;
+//    NewClientInfoMsg.m_ClassID = 0;
     NewClientInfoMsg.m_Silent = false;
 
     for(int p = 0; p < NUM_SKINPARTS; p++)
@@ -1262,7 +1262,7 @@ void IGameController::Com_reset_class(IConsole::IResult *pResult, void *pContext
         ClientInfoMsg.m_pName = pSelf->Server()->ClientName(i);
         ClientInfoMsg.m_pClan = pSelf->Server()->ClientClan(i);
         ClientInfoMsg.m_Country = pSelf->Server()->ClientCountry(i);
-        ClientInfoMsg.m_ClassID = 0;
+//        ClientInfoMsg.m_ClassID = 0;
         ClientInfoMsg.m_Silent = false;
         for(int p = 0; p < NUM_SKINPARTS; p++)
         {
