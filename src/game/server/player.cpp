@@ -553,6 +553,9 @@ void CPlayer::Become(Class who){
                        m_ClientID, Server()->ClientName(m_ClientID), m_pCharacter->GetMapID());
             GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game/class", aBuf);
             break;
+        case Class::Necromancer:
+            dbg_assert(false, "Class Necromancer is not implemented yet!");
+            break;
     }
     int new_class_id=0;
     switch(who){
@@ -579,6 +582,9 @@ void CPlayer::Become(Class who){
             break;
         case Class::Armorer:
             new_class_id=7;
+            break;
+        case Class::Necromancer:
+            dbg_assert(false, "Class Necromancer is not implemented yet!");
             break;
     }
     // update client infos (others before local)

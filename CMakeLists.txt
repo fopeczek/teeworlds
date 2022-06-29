@@ -898,8 +898,8 @@ set(EXPECTED_DATA
   fonts/SourceHanSans.ttc
   fonts/index.json
   game.png
-  github/Lobby.png
   github/Lobby&weapons.png
+  github/Lobby.png
   github/server.png
   languages/belarusian.json
   languages/bosnian.json
@@ -1368,6 +1368,7 @@ set_src(ENGINE_SHARED GLOB src/engine/shared
 )
 set(ENGINE_GENERATED_SHARED src/generated/nethash.cpp src/generated/protocol.cpp src/generated/protocol.h)
 set_src(GAME_SHARED GLOB src/game
+  CheatList.h
   collision.cpp
   collision.h
   commands.h
@@ -1628,8 +1629,6 @@ set_src(GAME_SERVER GLOB_RECURSE src/game/server
   gamecontext.h
   gamecontroller.cpp
   gamecontroller.h
-        gamemodes/teamworlds.cpp
-        gamemodes/teamworlds.h
   gamemodes/ctf.cpp
   gamemodes/ctf.h
   gamemodes/dm.cpp
@@ -1642,11 +1641,14 @@ set_src(GAME_SERVER GLOB_RECURSE src/game/server
   gamemodes/mod.h
   gamemodes/tdm.cpp
   gamemodes/tdm.h
+  gamemodes/teamworlds.cpp
+  gamemodes/teamworlds.h
   gameworld.cpp
   gameworld.h
+  gameworld_fwd.h
   player.cpp
   player.h
-        player_classes.h
+  player_classes.h
 )
 set(GAME_GENERATED_SERVER
   src/generated/server_data.cpp
